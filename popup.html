@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transaction Download</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div>
+        <div class="layout">
+            <div class="container">
+                <h2>Transaction Download</h2>
+                <form>
+                    <label>
+                        <input type="checkbox" id="csv-checkbox">
+                        Download CSV
+                    </label>
+                    <label>
+                        <input type="checkbox" id="koinly-checkbox">
+                        Download Koinly
+                    </label>
+                    <label>
+                        <input type="checkbox" id="blockpit-checkbox">
+                        Download Blockpit
+                    </label>
+                    <button id="inspect-cookies" type="button">Generate Files</button>
+                </form>
+
+                <!-- Loader -->
+                <div id="loader" style="display: none;">
+                    <img src="spinner.gif" alt="Loading...">
+                </div>
+
+                <div id="status-label" class="status-label"></div>
+
+            </div>
+            <div class="user-info">
+                <h3>User Info</h3>
+                <p>Alias:</strong> <span id="alias"></span></p>
+                <p>ID:</strong> <span id="user-id"></span></p>
+                <p>Email:</strong> <span id="email"></span></p>
+                <p>Created At:</strong> <span id="createdAt"></span></p>
+
+                <div id="version-info"></div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="config.js"></script>
+    <script type="module" src="popup.js"></script>
+</body>
+</html>
