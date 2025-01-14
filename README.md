@@ -24,9 +24,9 @@ A simple guide on how to download this repository from GitHub, install it as a C
    - Click the puzzle piece icon in Chrome's toolbar (top-right corner).
    - Find your newly added extension in the list and click the pin icon to keep it visible.
 2. **Open the Extension** by clicking its icon.
-3. **Follow On-Screen Instructions** (if any). Typically, you might:
-   - Click buttons or links provided by the extension.
-   - Configure options in a settings page, if available.
+3. **Follow On-Screen Instructions**:
+   - Make sure you are logged in to GoMining (We do not ask for any credetials.
+   - Enable files you want to download
 4. **Enjoy the Functionality** that the extension provides!
 
 ## 4. Contributing
