@@ -2,6 +2,8 @@
 
 A simple guide on how to download this repository from GitHub, install it as a Chrome extension, and use it.
 
+![Screenshot of the extension](./img/screenshot.png)
+
 ## 1. Download the Repository
 
 1. **Go to the GitHub repository** in your web browser.
