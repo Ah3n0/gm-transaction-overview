@@ -1,4 +1,4 @@
-const assert = require("assert");
+import assert from "assert";
 
 // Mock `document` object with required properties
 global.document = {

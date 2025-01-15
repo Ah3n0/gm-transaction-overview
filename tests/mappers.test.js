@@ -1,9 +1,9 @@
-const assert = require("assert");
-const { mapToKoinly, mapToBlockpit } = require("../scripts/utils/mappers.js");
+import assert from "assert";
+import { mapToKoinly, mapToBlockpit } from "../scripts/utils/mappers.js";
 
 // Mock formatDate function
-const originalFormatDate = require("../scripts/utils/time").formatDate;
-require("../scripts/utils/time").formatDate = (date, hourOffset = 0) => {
+const originalFormatDate = require("../scripts/utils/time.js").formatDate;
+require("../scripts/utils/time.js").formatDate = (date, hourOffset = 0) => {
     return `${date}_formatted_with_offset_${hourOffset}`;
 };
 
@@ -108,6 +108,6 @@ require("../scripts/utils/time").formatDate = (date, hourOffset = 0) => {
         console.error(`Test failed: ${error.message}\n`);
     } finally {
         // Restore original formatDate function
-        require("../scripts/utils/time").formatDate = originalFormatDate;
+        require("../scripts/utils/time.js").formatDate = originalFormatDate;
     }
 })();

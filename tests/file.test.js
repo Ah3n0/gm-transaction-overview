@@ -1,5 +1,5 @@
-const assert = require("assert");
-const { writeToCSV } = require("../scripts/utils/file.js");
+import assert from "assert";
+import { writeToCSV } from "../scripts/utils/file.js";
 
 // Mock Browser APIs
 global.URL = {

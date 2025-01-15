@@ -1,5 +1,5 @@
-const assert = require("assert");
-const { fetchData } = require("../scripts/utils/api.js");
+import assert from "assert";
+import { fetchData } from "../scripts/utils/api.js";
 
 // Mock the global fetch API
 global.fetch = (url) => {

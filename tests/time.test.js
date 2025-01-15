@@ -1,5 +1,5 @@
-const assert = require("assert");
-const { formatDate } = require("../scripts/utils/time.js");
+import assert from "assert";
+import { formatDate } from "../scripts/utils/time.js";
 
 (async () => {
     try {

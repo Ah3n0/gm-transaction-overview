@@ -1,5 +1,5 @@
-const assert = require("assert");
-const { getBearerTokenFromCookie } = require("../scripts/utils/cookies.js");
+import assert from "assert";
+import { getBearerTokenFromCookie } from "../scripts/utils/cookies.js";
 
 // Mock the chrome.cookies API
 global.chrome = {
