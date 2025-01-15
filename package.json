@@ -1,5 +1,6 @@
 {
     "name": "transfer-request",
+    "type": "module",
     "version": "0.3.1",
     "license": "MIT",
     "scripts": {
