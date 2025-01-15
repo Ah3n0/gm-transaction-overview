@@ -4,10 +4,11 @@
 ### Added
 - Added `utils.js` for utility functions.
 - Introduced new utility files to improve modularity.
+- Added badge version in readme
 
 ### Changed
-- updated readme
-- updated date label
+- Updated readme
+- Updated date label
 
 ### Changed
 - Refactored `popup.js` for better readability and maintainability.
