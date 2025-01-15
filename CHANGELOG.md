@@ -1,5 +1,8 @@
 # Changelog
 
+## Version 0.2.2
+- refactored code structure
+
 ## Version 0.2.1
 - added readme
 
