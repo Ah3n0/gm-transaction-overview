@@ -4,7 +4,10 @@
 ### Added
 - Added `utils.js` for utility functions.
 - Introduced new utility files to improve modularity.
+
+### Changed
 - updated readme
+- updated date label
 
 ### Changed
 - Refactored `popup.js` for better readability and maintainability.

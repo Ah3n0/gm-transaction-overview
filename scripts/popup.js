@@ -11,6 +11,7 @@ import {
 
 import { writeToCSV } from './utils/file.js';
 import { fetchData } from './utils/api.js';
+import { formatDate } from './utils/time.js';
 import { mapToKoinly, mapToBlockpit } from './utils/mappers.js';
 import { getBearerTokenFromCookie } from './utils/cookies.js';
 
@@ -104,7 +105,10 @@ document.addEventListener("DOMContentLoaded", async () => {
             document.getElementById("alias").textContent = userData.alias || "";
             document.getElementById("user-id").textContent = userData.id || "";
             document.getElementById("email").textContent = userData.email || "";
-            document.getElementById("createdAt").textContent = userData.createdAt || "";
+
+            // createdAt formatting
+            const formattedDate = formatDate(userData.createdAt).split(" ")[0];
+            document.getElementById("createdAt").textContent = formattedDate || "";            
         } else {
             throw new Error("No user data found.");
         }
