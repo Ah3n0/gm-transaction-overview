@@ -1,47 +1,70 @@
-# README
+# Chrome Extension: Transaction Downloader
 
-A simple guide on how to download this repository from GitHub, install it as a Chrome extension, and use it.
+This Chrome extension allows you to inspect cookies, extract the `access_token` automatically, and download transaction data from GoMining in various formats.
 
-![Screenshot of the extension](./img/screenshot.png)
+![Screenshot of the extension](./assets/screenshot.png)
 
-## 1. Download the Repository
+---
 
-1. **Go to the GitHub repository** in your web browser.
-2. Click the **Code** button (usually green) at the top right of the file list.
-3. Select **Download ZIP**.
-4. **Unzip** the downloaded file to a folder on your computer.
+## Installation
 
-## 2. Install as a Chrome Extension
+### Step 1: Download the Repository
+1. Visit the [GitHub repository page](#).
+2. Click the green **Code** button and select **Download ZIP**.
+3. Extract the ZIP file to a folder on your computer.
 
-1. **Open Google Chrome**.
-2. Enter `chrome://extensions` in the address bar and press **Enter**.
-3. **Enable Developer Mode**: toggle the switch in the top-right corner.
-4. Click on **Load unpacked**.
-5. Browse to the folder where you unzipped the repository, then click **Select Folder**.
-6. The extension will now appear in your extensions list.
+### Step 2: Install the Extension in Chrome
+1. Open Google Chrome and go to `chrome://extensions`.
+2. Enable **Developer Mode** by toggling the switch in the top-right corner.
+3. Click **Load unpacked**.
+4. Navigate to the folder where you extracted the repository and click **Select Folder**.
+5. The extension will now appear in your list of installed extensions.
 
-## 3. Usage
-
+### Step 3: Using the Extension
 1. **Pin the Extension** (optional but recommended):
    - Click the puzzle piece icon in Chrome's toolbar (top-right corner).
-   - Find your newly added extension in the list and click the pin icon to keep it visible.
-2. **Open the Extension** by clicking its icon.
-3. **Follow On-Screen Instructions**:
-   - Make sure you are logged in to GoMining (We do not ask for any credetials.
-   - Enable files you want to download
-4. **Enjoy the Functionality** that the extension provides!
+   - Find the newly installed extension in the list and click the pin icon to keep it visible.
+2. **Open the Extension** by clicking its icon in the toolbar.
+3. **Follow the On-Screen Instructions**:
+   - Ensure you are logged into GoMining (no credentials are required by the extension).
+   - Select the files you wish to download using the provided checkboxes.
+4. **Enjoy the Features** offered by the extension!
 
-## 4. Contributing
+---
 
-1. **Fork** the repository on GitHub.
-2. **Create a new branch** for your feature or bug fix.
-3. **Make your changes** and commit them with descriptive messages.
-4. **Push** your branch to your fork.
-5. Open a **Pull Request** (PR) to merge your changes into the original repository.
+## Features
 
-## 5. License
+1. **Login Status Check**: Confirms if the user is logged into GoMining.
+2. **File Format Selection**: Supports CSV, Koinly, and Blockpit formats for downloads.
+3. **Transaction Data Download**: Automatically generates and downloads transaction data.
+4. **User-Friendly Interface**: Simple and intuitive design with clear instructions.
 
-This project is licensed under the [MIT License](LICENSE). Feel free to use and modify this extension, but please give proper credit to the original authors.
+---
+
+## Contributing
+
+We welcome contributions to improve this project. To get started:
+1. Fork the repository on GitHub.
+2. Create a new branch for your feature or bug fix.
+3. Make your changes and commit them with descriptive messages.
+4. Push your branch to your fork.
+5. Submit a Pull Request (PR) to merge your changes into the original repository.
+
+---
+
+## Roadmap
+
+Here are some planned features and improvements for future updates:
+1. **Custom Date Range**: Add functionality to select a specific start date for reports.
+2. **Background Processing**: Allow downloads to continue processing even when the popup is closed.
+3. **Wallet Integration**: Add BTC wallet support and enable wallet selection.
+4. **Buy/Sell Data**: Include transactions unrelated to GMT/BTC wallets in the generated files.
+
+---
+
+## License
+
+This project is licensed under the [MIT License](LICENSE). Feel free to use, modify, and share it, but please credit the original authors.
 
 ---
 
