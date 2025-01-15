@@ -71,9 +71,19 @@ If you enjoy using this extension and would like to support its development, con
 
 1. **Refer Friends to GoMining**: Use this [GM referral link](https://gomining.com/?ref=Zi-68) - Code Zi-68.
 2. **Donate BTC on BNB Chain**:
-   Send BTC (on BNB Chain) to the following address:
+   Send BTC to the following address:
    ```bash
-   0x4FdE75419b39E8108C4A19C23A55182c80d418D1
+   1LB619xV9vwGJVu7L5e9qdLZvGZhoYERvo
+   ```
+
+   Send USDT/TON (on TON Chain) to the following address:
+   ```bash
+   UQBz2QfwDidnl98mQdNrt7AVQD2V9QD7UiDGi-pENqC3qowk
+   ```
+
+   Send USDT (on TRC-20 Chain) to the following address:
+   ```bash
+   TP9mjWpNdoMRAnoLvVdJwM3yKuUgW7SzBi
    ```
 
 Your support is greatly appreciated!
