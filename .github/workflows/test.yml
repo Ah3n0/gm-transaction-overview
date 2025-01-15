@@ -23,6 +23,17 @@ jobs:
         with:
           node-version: '20'
 
+      # Install dependencies
+      - name: Install dependencies
+        run: npm install
+
       # Run all tests using run-tests.js
       - name: Run tests
         run: node run-tests.js
+
+      # Verify successful execution
+      - name: Verify test execution
+        if: failure()
+        run: |
+          echo "Some tests failed. Please review the logs."
+          exit 1
