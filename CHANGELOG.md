@@ -1,5 +1,9 @@
 # Changelog
 
+## Version 0.3.0
+### Added
+- Datepicker
+
 ## Version 0.2.3
 ### Added
 - Added `utils.js` for utility functions.

@@ -1,6 +1,6 @@
 {
     "name": "transfer-request",
-    "version": "0.2.3",
+    "version": "0.3.0",
     "scripts": {
         "sync-version": "node scripts/update-manifest.js",
         "build": "npm run sync-version && echo 'Building...' "

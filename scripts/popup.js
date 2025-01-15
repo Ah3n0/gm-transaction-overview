@@ -26,6 +26,7 @@ async function main() {
     const loader = document.getElementById("loader");
     const statusLabel = document.getElementById("status-label");
     const progressLabel = document.createElement("div");
+    const datePicker = document.getElementById("start-date-picker");
     progressLabel.id = "progress-label";
     progressLabel.style.marginTop = "10px";
     progressLabel.style.color = "#555";
@@ -41,6 +42,11 @@ async function main() {
             updateStatusLabel(statusLabel, "Please select at least one option.", true);
             return;
         }
+
+        // Get the selected start date
+        const startDate = datePicker.value
+            ? new Date(`${datePicker.value}T00:00:00`)
+            : null;
 
         const bearerToken = await getBearerTokenFromCookie().catch((error) => {
             throw new Error("No access_token found. Please log in to GoMining (https://app.gomining.com) and try again.");
@@ -61,7 +67,22 @@ async function main() {
             const skip = (page - 1) * 50;
             progressLabel.textContent = `Fetching page ${page} of ${pages}...`;
             const response = await fetchData(skip, bearerToken, BASE_URL);
-            allEntries.push(...response.data.array);
+
+            // Include only entries starting from the selected date
+            response.data.array.forEach((entry) => {
+                if (entry.createdAt) { // Check if createdAt exists
+                    // Extract the date part (YYYY-MM-DD) from the ISO format
+                    const entryDate = entry.createdAt.split("T")[0]; 
+                    const startDateString = datePicker.value; // DatePicker gives YYYY-MM-DD format
+            
+                    // Compare only the date parts
+                    if (!startDateString || entryDate >= startDateString) {
+                        allEntries.push(entry);
+                    }
+                } else {
+                    console.warn("Entry without createdAt found:", entry); // Log problematic entries for debugging
+                }
+            });                      
         }
 
         progressLabel.style.display = "none";
@@ -85,6 +106,9 @@ async function main() {
 document.getElementById("inspect-cookies").addEventListener("click", main);
 
 document.addEventListener("DOMContentLoaded", async () => {
+    const datePicker = document.getElementById("start-date-picker");
+    const clearDateLink = document.getElementById("clear-date");
+    const createdAtElement = document.getElementById("createdAt");
     const manifest = chrome.runtime.getManifest();
     document.getElementById("version-info").textContent = `Version: ${manifest.version}`;
 
@@ -108,7 +132,13 @@ document.addEventListener("DOMContentLoaded", async () => {
 
             // createdAt formatting
             const formattedDate = formatDate(userData.createdAt).split(" ")[0];
-            document.getElementById("createdAt").textContent = formattedDate || "";            
+            createdAtElement.textContent = formattedDate || "";
+
+            // Set the initial value of the date picker to the user's creation date
+            if (datePicker && formattedDate) {
+                const formattedPickerDate = new Date(formattedDate).toISOString().split('T')[0];
+                datePicker.value = formattedPickerDate;
+            }
         } else {
             throw new Error("No user data found.");
         }
@@ -116,4 +146,20 @@ document.addEventListener("DOMContentLoaded", async () => {
         console.error("Error fetching user info:", err);
         document.getElementById("alias").textContent = "Error";
     }
+
+    // Event handler to clear the date picker
+    clearDateLink.addEventListener("click", (event) => {
+        event.preventDefault();
+        if (datePicker) {
+            const createdAtElement = document.getElementById("createdAt");
+            const createdAt = createdAtElement?.textContent.trim();
+            if (createdAt) {
+                const formattedDate = new Date(createdAt).toISOString().split('T')[0];
+                datePicker.value = formattedDate;
+                console.log(`Date picker reset to createdAt date: ${formattedDate}`);
+            } else {
+                console.error("CreatedAt date not found.");
+            }
+        }
+    });    
 });
