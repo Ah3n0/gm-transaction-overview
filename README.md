@@ -4,6 +4,8 @@ This Chrome extension allows you to inspect cookies, extract the `access_token` 
 
 [![Version](https://img.shields.io/github/package-json/v/Ah3n0/gm-transaction-overview)](https://github.com/Ah3n0/gm-transaction-overview)
 
+![Build Status](https://img.shields.io/github/actions/workflow/status/Ah3n0/gm-transaction-overview/ci.yml?branch=master)
+
 ![Screenshot of the extension](./assets/screenshot.png)
 
 ---
