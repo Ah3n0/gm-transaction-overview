@@ -1,0 +1,31 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            // We are running a Node.js process
+            "type": "node",
+            // We want to launch (start) the script
+            "request": "launch",
+            // The name of this configuration (will appear in VS Code's Debug panel)
+            "name": "Sync Version",
+    
+            // Use npm as the runtime
+            "runtimeExecutable": "npm",
+            // The arguments passed to npm; this will run "npm run sync-version"
+            "runtimeArgs": [
+            "run",
+            "sync-version"
+            ],
+            // Skips stepping into Node internals while debugging
+            "skipFiles": [
+            "<node_internals>/**"
+            ],
+    
+            // Use the integrated terminal in VS Code
+            "console": "integratedTerminal",
+            // Set the working directory to your project folder
+            "cwd": "${workspaceFolder}"
+        }
+    ]
+}
+  
