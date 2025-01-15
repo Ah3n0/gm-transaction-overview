@@ -64,6 +64,21 @@ Here are some planned features and improvements for future updates:
 
 ---
 
+## Support the Project
+
+If you enjoy using this extension and would like to support its development, consider the following options:
+
+1. **Refer Friends to GoMining**: Use this [GM referral link](https://gomining.com/?ref=Zi-68) - Code Zi-68.
+2. **Donate BTC on BNB Chain**:
+   Send BTC (on BNB Chain) to the following address:
+   ```bash
+   0x4FdE75419b39E8108C4A19C23A55182c80d418D1
+   ```
+
+Your support is greatly appreciated!
+
+---
+
 ## License
 
 This project is licensed under the [MIT License](LICENSE). Feel free to use, modify, and share it, but please credit the original authors.
