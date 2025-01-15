@@ -8,10 +8,5 @@
         "build": "npm run sync-version && echo 'Building...' "
     },
     "devDependencies": {
-        "@babel/core": "^7.26.0",
-        "@babel/preset-env": "^7.26.0",
-        "babel-jest": "^29.7.0",
-        "jest": "^29.7.0",
-        "jest-chrome": "^0.8.0"
     }
 }
