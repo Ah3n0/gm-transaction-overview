@@ -2,6 +2,10 @@
 
 ## Version 0.3.0
 ### Added
+- unittests for api, cookies, files, mappers, time and popup js files
+
+## Version 0.3.0
+### Added
 - Datepicker
 
 ## Version 0.2.3
