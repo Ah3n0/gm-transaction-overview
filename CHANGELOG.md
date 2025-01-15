@@ -1,8 +1,9 @@
 # Changelog
 
-## Version 0.3.0
+## Version 0.3.1
 ### Added
-- unittests for api, cookies, files, mappers, time and popup js files
+- Unittests for api, cookies, files, mappers, time and popup js files
+- Github workflow for unittests
 
 ## Version 0.3.0
 ### Added
@@ -10,13 +11,13 @@
 
 ## Version 0.2.3
 ### Added
-- Added `utils.js` for utility functions.
+   `utils.js` for utility functions.
 - Introduced new utility files to improve modularity.
-- Added badge version in readme
+- Badge version in readme
 
 ### Changed
-- Updated readme
-- Updated date label
+- Readme
+- Date label
 
 ### Changed
 - Refactored `popup.js` for better readability and maintainability.
@@ -27,7 +28,7 @@
 
 ## Version 0.2.1
 ### Added
-- Added `README.md` documentation.
+- `README.md` documentation.
 
 ## Version 0.2.0
 ### Added
