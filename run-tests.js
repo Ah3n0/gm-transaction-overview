@@ -11,7 +11,7 @@ const __dirname = path.dirname(__filename);
 const testDir = path.resolve(__dirname, "tests");
 
 // Read all test files in the directory
-const testFiles = readdirSync(testDir).filter((file) => file.endsWith(".test.js"));
+const testFiles = readdirSync(testDir).filter((file) => file.endsWith(".test.cjs"));
 
 // Execute each test file
 testFiles.forEach((file) => {
