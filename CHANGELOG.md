@@ -1,5 +1,9 @@
 # Changelog
 
+## Version 0.2.3
+- added utils.js
+- refactored popup.js
+
 ## Version 0.2.2
 - refactored code structure
 
