@@ -1,5 +1,5 @@
 import { 
-    BASE_URL, 
+BASE_URL, 
     AUTH_URL, 
     OUTPUT_CSV_FILE, 
     KOINLY_CSV_FILE, 
@@ -10,7 +10,7 @@ import {
 } from './config.js';
 
 import { writeToCSV } from './utils/file.js';
-import { fetchData } from './utils/api.js';
+import { fetchData, fetchNFT, fetchUpgradesNFT } from './utils/api.js';
 import { formatDate } from './utils/time.js';
 import { mapToKoinly, mapToBlockpit } from './utils/mappers.js';
 import { getBearerTokenFromCookie } from './utils/cookies.js';
@@ -110,6 +110,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     const clearDateLink = document.getElementById("clear-date");
     const createdAtElement = document.getElementById("createdAt");
     const manifest = chrome.runtime.getManifest();
+    const minerList = document.getElementById('miner-list');
+    minerList.innerHTML = '<p>Loading...</p>';
     document.getElementById("version-info").textContent = `Version: ${manifest.version}`;
 
     try {
@@ -147,6 +149,43 @@ document.addEventListener("DOMContentLoaded", async () => {
         document.getElementById("alias").textContent = "Error";
     }
 
+    // fetch all miner
+    minerList.innerHTML = '<p>Loading...</p>';
+
+    try {
+        const bearerToken = await getBearerTokenFromCookie();
+        const data = await fetchNFT(0, bearerToken);
+        const miners = data.data.array;
+
+        minerList.innerHTML = '';
+        miners.forEach(miner => {
+            const minerData = miner.nfts[0];
+            if (!minerData) {
+                console.warn('Miner without NFT data:', miner);
+                return;
+            }
+
+            const card = document.createElement('div');
+            card.className = 'miner-card';
+
+            card.innerHTML = `
+                <img src="${minerData.smallImageUrl}" alt="${minerData.name}">
+                <h4>${minerData.name}</h4>
+                <p>Value: ${miner.value || 0} GMT</p>
+            `;
+
+            // Click-Event for cards
+            card.addEventListener('click', () => {
+                displayMinerEvents(minerData.id, bearerToken);
+            });
+
+            minerList.appendChild(card);
+        });
+    } catch (error) {
+        console.error('Error loading miners:', error);
+        minerList.innerHTML = '<p>Error loading miners.</p>';
+    }
+
     // Event handler to clear the date picker
     clearDateLink.addEventListener("click", (event) => {
         event.preventDefault();
@@ -163,3 +202,74 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
     });    
 });
+
+document.querySelectorAll('.accordion-header').forEach(header => {
+    header.addEventListener('click', () => {
+        const targetId = header.getAttribute('data-target');
+        const targetElement = document.getElementById(targetId);
+    
+        // Alle anderen collapses schließen
+        document.querySelectorAll('.accordion-collapse').forEach(collapse => {
+            if (collapse !== targetElement) {
+            collapse.classList.remove('show');
+            }
+        });
+    
+        // Das angeklickte Element toggeln
+        targetElement.classList.toggle('show');
+    });
+});
+
+document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+        // Alle Tabs deaktivieren
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        // Alle Panels ausblenden
+        document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.remove('active'));
+
+        // Aktiven Tab und zugehöriges Panel aktivieren
+        tab.classList.add('active');
+        const target = tab.getAttribute('data-target');
+        document.querySelector(`.${target}`).classList.add('active');
+    });
+}); 
+
+async function displayMinerEvents(minerId, bearerToken) {
+    const eventList = document.getElementById('event-list');
+    const minerEventsContainer = document.getElementById('miner-events');
+    minerEventsContainer.style.display = 'block';
+    eventList.innerHTML = '<li>Loading events...</li>';
+
+    if (!minerId) {
+        console.error('Miner ID is undefined or invalid.');
+        eventList.innerHTML = '<li>Invalid Miner ID.</li>';
+        return;
+    }
+
+    try {
+        const response = await fetchUpgradesNFT(0, bearerToken);
+        const events = response.data.array.filter(event => event.nft?.id === minerId);
+
+        if (events.length === 0) {
+            eventList.innerHTML = '<li>No events found for this miner.</li>';
+            return;
+        }
+
+        eventList.innerHTML = '';
+        events.forEach(event => {
+            const listItem = document.createElement('li');
+            listItem.innerHTML = `
+                <strong>Updated At:</strong> ${event.updatedAt} <br>
+                <strong>Status:</strong> ${event.status} <br>
+                <strong>Upgrade Type:</strong> ${event.upgradeType || 'N/A'} <br>
+                <strong>USD Value:</strong> ${event.usdtValue || 0} USD
+            `;
+            eventList.appendChild(listItem);
+        });
+        // Scroll to the miner-events container
+        minerEventsContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } catch (error) {
+        console.error('Error fetching miner events:', error);
+        eventList.innerHTML = '<li>Error fetching events.</li>';
+    }
+}

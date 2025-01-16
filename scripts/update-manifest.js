@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
-const fs = require("fs");
-const path = require("path");
+import fs from "fs";
+import path from "path";
 
 // Adjust paths if your files are located elsewhere:
 const packageJsonPath = path.join(__dirname, "../package.json");

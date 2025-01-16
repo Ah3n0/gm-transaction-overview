@@ -9,45 +9,61 @@
 <body>
     <div>
         <div class="layout">
-            <div class="container">
-                <h2>Transaction Download</h2>
-                <form>
-                    <label>
-                        <input type="checkbox" id="csv-checkbox">
-                        Download CSV
-                    </label>
-                    <label>
-                        <input type="checkbox" id="koinly-checkbox">
-                        Download Koinly
-                    </label>
-                    <label>
-                        <input type="checkbox" id="blockpit-checkbox">
-                        Download Blockpit
-                    </label>
-                    <label>
-                        Start At:
-                        <input type="date" id="start-date-picker">
-                        <a href="#" id="clear-date" style="margin-left: 10px;">Clear Date</a>
-                    </label>
-                    <button id="inspect-cookies" type="button">Generate Files</button>
-                </form>
-
-                <!-- Loader -->
-                <div id="loader" style="display: none;">
-                    <img src="../assets/spinner.gif" alt="Loading...">
+            <div>
+                <div class="tab-container">
+                    <div class="tabs">
+                        <div class="tab" data-target="container">Download</div>
+                        <div class="tab" data-target="nft-info">NFT Info</div>
+                    </div>
+                    <div class="tab-content">
+                        <div class="container tab-panel active">
+                            <h2>Transaction Download</h2>
+                            <form>
+                                <label>
+                                    <input type="checkbox" id="csv-checkbox">
+                                    Download CSV
+                                </label>
+                                <label>
+                                    <input type="checkbox" id="koinly-checkbox">
+                                    Download Koinly
+                                </label>
+                                <label>
+                                    <input type="checkbox" id="blockpit-checkbox">
+                                    Download Blockpit
+                                </label>
+                                <label>
+                                    Start At:
+                                    <input type="date" id="start-date-picker">
+                                    <a href="#" id="clear-date" style="margin-left: 10px;">Clear Date</a>
+                                </label>
+                                <button id="inspect-cookies" type="button">Generate Files</button>
+                            </form>
+                            <div id="loader" style="display: none;">
+                                <img src="../assets/spinner.gif" alt="Loading...">
+                            </div>
+                            <div id="status-label" class="status-label"></div>
+                        </div>
+                        <div class="nft-info tab-panel">
+                            <h3>Miner Overview</h3>
+                            <div id="miner-list" class="miner-list"></div>
+                            <div id="miner-events" class="miner-events">
+                                <h4>Miner Events</h4>
+                                <ul id="event-list"></ul>
+                            </div>
+                        </div>                        
+                    </div>
                 </div>
-
-                <div id="status-label" class="status-label"></div>
             </div>
+            
             <div class="user-info">
                 <h3>User Info</h3>
-                <p>Alias:</strong> <span id="alias"></span></p>
-                <p>ID:</strong> <span id="user-id"></span></p>
-                <p>Email:</strong> <span id="email"></span></p>
-                <p>Joined GM:</strong> <span id="createdAt"></span></p>
-
-                <div id="version-info"></div>
+                <p><strong>Alias:</strong> <br> <span id="alias"></span></p>
+                <p><strong>ID:</strong> <br> <span id="user-id"></span></p>
+                <p><strong>Email:</strong> <br> <span id="email"></span></p>
+                <p><strong>Joined:</strong> <br> <span id="createdAt"></span></p>
             </div>
+
+            <div id="version-info"></div>
         </div>
     </div>
 

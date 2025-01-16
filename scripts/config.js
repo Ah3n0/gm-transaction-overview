@@ -1,8 +1,8 @@
-// config.js
-
 // API Endpoints and Filenames
 export const BASE_URL = "https://app.gomining.com/api/virtual-wallet-transaction/index";
 export const AUTH_URL = "https://api.gomining.com/api/auth/isAuth";
+export const MINER_UPGRADE_URL = "https://api.gomining.com/api/internal-payment/get-my";
+export const MINER_BUY_URL = "https://api.gomining.com/api/user-payments-history/index";
 export const OUTPUT_CSV_FILE = "output.csv";
 export const KOINLY_CSV_FILE = "koinly_formatted.csv";
 export const BLOCKPIT_CSV_FILE = "blockpit_formatted.csv";

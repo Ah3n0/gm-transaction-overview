@@ -1,5 +1,9 @@
 # Changelog
 
+## Version 0.4.0
+### Added
+- NFT Overview with listed events
+
 ## Version 0.3.1
 ### Added
 - Unittests for api, cookies, files, mappers, time and popup js files
