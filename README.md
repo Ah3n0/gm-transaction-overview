@@ -7,6 +7,8 @@ This Chrome extension allows you to inspect cookies, extract the `access_token` 
 
 ![Screenshot of the extension](./assets/screenshot.png)
 
+![Screenshot of the extension](./assets/screenshot2.png)
+
 ---
 
 ## Installation
@@ -31,7 +33,9 @@ This Chrome extension allows you to inspect cookies, extract the `access_token` 
 3. **Follow the On-Screen Instructions**:
    - Ensure you are logged into GoMining (no credentials are required by the extension).
    - Select the files you wish to download using the provided checkboxes.
-4. **Enjoy the Features** offered by the extension!
+4. **Select NFT** by clicking NFT Info in the top menue
+   - Click NFT -> an action overview is displeyed
+5. **Enjoy the Features** offered by the extension!
 
 ---
 
@@ -42,6 +46,7 @@ This Chrome extension allows you to inspect cookies, extract the `access_token` 
 3. **Transaction Data Download**: Automatically generates and downloads transaction data.
 4. **User-Friendly Interface**: Simple and intuitive design with clear instructions.
 5. **Custom Date Range**: Add functionality to select a specific start date for reports.
+6. **NFT Overview**: List all belonging NFTs and its upgrades
 
 ---
 
