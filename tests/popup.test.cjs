@@ -58,7 +58,7 @@ global.fetch = (url, options) => {
 };
 
 // Import the module after mocks are set up
-const { main, updateStatusLabel } = require("../scripts/popup");
+import { main, updateStatusLabel } from "../scripts/popup.js";
 
 (async () => {
     try {
