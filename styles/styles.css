@@ -25,14 +25,14 @@ h2 {
     padding: 20px;
 }
 
-.container, .nft-info, .user-info {
+.container, .nft-info, .mw-info, .discount-info, .user-info {
     background: #ffffff;
     border-radius: 12px;
     padding: 20px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-.container, .nft-info {
+.container, .nft-info, .discount-info, .mw-info {
     width: 500px;
     flex: 2;
     margin: 0 auto;
@@ -292,4 +292,122 @@ button:active {
     border-bottom: none;
 }
 
+/* Discount Info Section */
+.discount-info {
+    background-color: #ffffff;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    margin-top: 20px;
+    font-size: 1rem;
+    color: #333;
+}
 
+/* Discount List */
+.discount-list {
+    margin: 10px 0;
+    padding: 0;
+    list-style: none;
+}
+
+.discount-list p {
+    font-size: 1rem;
+    color: #555;
+    margin: 5px 0;
+}
+
+.discount-info p {
+    font-size: 1rem;
+    margin: 8px 0;
+    color: #333;
+    line-height: 1.6;
+}
+
+.discount-info strong {
+    margin: 10px 0;
+    font-size: 1rem;
+    color: #555;
+}
+
+/* Update Button */
+#update-button {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    margin-top: 15px;
+    font-size: 1rem;
+    border: none;
+    border-radius: 8px;
+    background-color: #007bff;
+    color: #ffffff;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+#update-button:hover {
+    background-color: #0056b3;
+    transform: translateY(-2px);
+}
+
+#update-button:active {
+    transform: translateY(0);
+}
+
+#update-button:disabled {
+    background-color: #cccccc;
+    color: #666666;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+/* Highlighted Discount Values */
+#token-discount,
+#service-discount,
+#level-discount,
+#solo-discount,
+#gmt-balance,
+#gmt-locked,
+#active-maintenance-days,
+#maintenance-without-discount,
+#total-maintenance {
+    font-weight: bold;
+    color: #333;
+}
+
+#service-discount,
+#level-discount,
+#solo-discount {
+    color: #28a745; /* Grün für Rabatte */
+}
+
+#gmt-locked {
+    color: #ff6f61; /* Rot für finanzielle Werte */
+}
+
+#gmt-balance,
+#maintenance-without-discount,
+#total-maintenance {
+    color: #007bff; /* Blau für technische Werte */
+}
+
+
+/* Disabled Button */
+button:disabled {
+    background-color: #cccccc;
+    color: #666666;
+    cursor: not-allowed;
+    transform: none;
+}
+
+#update-button {
+    background-color: #007bff;
+    color: #ffffff;
+}
+
+#update-button:disabled {
+    background-color: #cccccc;
+    color: #666666;
+    cursor: not-allowed;
+}

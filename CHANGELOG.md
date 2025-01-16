@@ -1,5 +1,10 @@
 # Changelog
 
+## Version 0.5.0
+### Added
+- Maintenance information
+- Maintenance Service Button (Without function yet)
+
 ## Version 0.4.0
 ### Added
 - NFT Overview with listed events

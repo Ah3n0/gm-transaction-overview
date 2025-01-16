@@ -12,12 +12,14 @@
             <div>
                 <div class="tab-container">
                     <div class="tabs">
-                        <div class="tab" data-target="container">Download</div>
-                        <div class="tab" data-target="nft-info">NFT Info</div>
+                        <div class="tab" data-target="container">Export</div>
+                        <div class="tab" data-target="nft-info">NFT</div>
+                        <div class="tab" data-target="mw-info">Miner Wars</div>
+                        <div class="tab" data-target="discount-info">Discount</div>
                     </div>
                     <div class="tab-content">
                         <div class="container tab-panel active">
-                            <h2>Transaction Download</h2>
+                            <h3>Transaction Download</h3>
                             <form>
                                 <label>
                                     <input type="checkbox" id="csv-checkbox">
@@ -50,6 +52,23 @@
                                 <h4>Miner Events</h4>
                                 <ul id="event-list"></ul>
                             </div>
+                        </div> 
+                        <div class="discount-info tab-panel">
+                            <h3>Discount Info</h3>
+                            <div id="discount-list" class="discount-list"></div>
+                            <p><strong>Token-Discount:</strong> <span id="token-discount"></span> day(s)</p>
+                            <p><strong>Service-Discount:</strong> <span id="service-discount"></span> %</p>
+                            <p><strong>Level-Discount:</strong> <span id="level-discount"></span> %</p>
+                            <p><strong>Solo-Discount:</strong> <span id="solo-discount"></span> %</p>
+                            <p><strong>GMT Balance:</strong> <span id="gmt-balance"></span></p>
+                            <p><strong>GMT Locked:</strong> <span id="gmt-locked"></span></p>
+                            <p><strong>Days of Active Maintenance:</strong> <span id="active-maintenance-days"></span></p>
+                            <p><strong>Maintenance Without Discount:</strong> <span id="maintenance-without-discount"></span> GMT</p>
+                            <p><strong>Total Maintenance:</strong> <span id="total-maintenance"></span> GMT</p>
+                            <button id="update-button" disabled>Update Maintenance</button>
+                        </div>                         
+                        <div class="mw-info tab-panel">
+                            <h3>Miner Wars</h3>
                         </div>                        
                     </div>
                 </div>

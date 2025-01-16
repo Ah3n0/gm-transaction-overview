@@ -10,17 +10,19 @@ BASE_URL,
 } from './config.js';
 
 import { writeToCSV } from './utils/file.js';
-import { fetchData, fetchNFT, fetchUpgradesNFT } from './utils/api.js';
+import { fetchData, fetchDiscount, fetchNFT, fetchUpgradesNFT, fetchMaintenanceState } from './utils/api.js';
 import { formatDate } from './utils/time.js';
 import { mapToKoinly, mapToBlockpit } from './utils/mappers.js';
 import { getBearerTokenFromCookie } from './utils/cookies.js';
 
+// Function to update the status label with a message and style it based on error or success
 function updateStatusLabel(statusLabel, message, isError) {
     statusLabel.textContent = message;
     statusLabel.className = `status-label ${isError ? 'error' : 'success'}`;
     statusLabel.style.display = "block";
 }
 
+// Main function to handle the button click event
 async function main() {
     const button = document.getElementById("inspect-cookies");
     const loader = document.getElementById("loader");
@@ -38,6 +40,7 @@ async function main() {
         const koinlyChecked = document.getElementById("koinly-checkbox").checked;
         const blockpitChecked = document.getElementById("blockpit-checkbox").checked;
 
+        // Ensure at least one option is selected
         if (!csvChecked && !koinlyChecked && !blockpitChecked) {
             updateStatusLabel(statusLabel, "Please select at least one option.", true);
             return;
@@ -48,21 +51,25 @@ async function main() {
             ? new Date(`${datePicker.value}T00:00:00`)
             : null;
 
+        // Get bearer token from cookies
         const bearerToken = await getBearerTokenFromCookie().catch((error) => {
             throw new Error("No access_token found. Please log in to GoMining (https://app.gomining.com) and try again.");
         });
 
+        // Update UI elements to show loading state
         button.style.display = "none";
         button.disabled = true;
         loader.style.display = "inline-block";
         statusLabel.style.display = "none";
         progressLabel.style.display = "block";
 
+        // Fetch initial data to determine total entries
         const firstResponse = await fetchData(0, bearerToken, BASE_URL);
         const totalEntries = firstResponse.data.count;
         const pages = Math.ceil(totalEntries / 50);
         const allEntries = [];
 
+        // Fetch data page by page
         for (let page = 1; page <= pages; page++) {
             const skip = (page - 1) * 50;
             progressLabel.textContent = `Fetching page ${page} of ${pages}...`;
@@ -87,6 +94,7 @@ async function main() {
 
         progressLabel.style.display = "none";
 
+        // Write data to CSV files based on selected options
         if (csvChecked) writeToCSV(OUTPUT_CSV_FILE, allEntries, CSV_HEADER);
         if (koinlyChecked) writeToCSV(KOINLY_CSV_FILE, allEntries.map(mapToKoinly), KOINLY_HEADER);
         if (blockpitChecked) writeToCSV(BLOCKPIT_CSV_FILE, allEntries.map(mapToBlockpit), BLOCKPIT_HEADER);
@@ -96,6 +104,7 @@ async function main() {
         console.error("Error:", error);
         updateStatusLabel(statusLabel, error.message || "Error during download!", true);
     } finally {
+        // Reset UI elements to initial state
         button.style.display = "inline-block";
         button.disabled = false;
         loader.style.display = "none";
@@ -103,17 +112,22 @@ async function main() {
     }
 }
 
+// Add event listener to the button
 document.getElementById("inspect-cookies").addEventListener("click", main);
 
+// Event listener for DOM content loaded
 document.addEventListener("DOMContentLoaded", async () => {
     const datePicker = document.getElementById("start-date-picker");
     const clearDateLink = document.getElementById("clear-date");
     const createdAtElement = document.getElementById("createdAt");
     const manifest = chrome.runtime.getManifest();
     const minerList = document.getElementById('miner-list');
+    const discountList = document.getElementById('discount-list');
     minerList.innerHTML = '<p>Loading...</p>';
+    discountList.innerHTML = '<p>Loading...</p>';
     document.getElementById("version-info").textContent = `Version: ${manifest.version}`;
 
+    // Fetch user information
     try {
         const bearerToken = await getBearerTokenFromCookie();
         const response = await fetch(AUTH_URL, {
@@ -132,7 +146,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             document.getElementById("user-id").textContent = userData.id || "";
             document.getElementById("email").textContent = userData.email || "";
 
-            // createdAt formatting
+            // Format and display the user's creation date
             const formattedDate = formatDate(userData.createdAt).split(" ")[0];
             createdAtElement.textContent = formattedDate || "";
 
@@ -149,9 +163,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         document.getElementById("alias").textContent = "Error";
     }
 
-    // fetch all miner
-    minerList.innerHTML = '<p>Loading...</p>';
-
+    // Fetch all miners
     try {
         const bearerToken = await getBearerTokenFromCookie();
         const data = await fetchNFT(0, bearerToken);
@@ -174,7 +186,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                 <p>Value: ${miner.value || 0} GMT</p>
             `;
 
-            // Click-Event for cards
+            // Click event for miner cards
             card.addEventListener('click', () => {
                 displayMinerEvents(minerData.id, bearerToken);
             });
@@ -184,6 +196,72 @@ document.addEventListener("DOMContentLoaded", async () => {
     } catch (error) {
         console.error('Error loading miners:', error);
         minerList.innerHTML = '<p>Error loading miners.</p>';
+    }
+
+    // Fetch discount information
+    try {
+        const bearerToken = await getBearerTokenFromCookie();
+        const data = await fetchDiscount(bearerToken);
+        const discount = data.data;
+
+        if (discount) {
+            discountList.innerHTML = ''; 
+
+            document.getElementById("token-discount").textContent = discount.discountAvailableDays || "0";
+            document.getElementById("service-discount").textContent = (discount.dailyMaintenanceDiscount * 100).toFixed(2) || "0.00";
+            document.getElementById("level-discount").textContent = (discount.levelDiscount * 100).toFixed(2) || "0.00";
+            document.getElementById("solo-discount").textContent = (discount.rewardDistributionDiscount * 100).toFixed(2) || "0.00";
+            document.getElementById("gmt-balance").textContent = discount.gmtBalance.toFixed(6) || "0.000000";
+            document.getElementById("gmt-locked").textContent = discount.gmtLocked.toFixed(6) || "0.000000";
+            document.getElementById("active-maintenance-days").textContent = discount.daysCountOfActiveMaintenance || "0";
+            document.getElementById("maintenance-without-discount").textContent = discount.maintenanceInGmtWithoutDiscount.toFixed(6) || "0.000000";
+            document.getElementById("total-maintenance").textContent = discount.totalMaintenanceBeforeTokenDiscount.toFixed(6) || "0.000000";
+        }
+    } catch (error) {
+        console.error('Error loading discount:', error);
+        discountList.innerHTML = '<p>Error loading discount.</p>';
+    }
+
+    // fetch maintenance status
+    try {
+        const bearerToken = await getBearerTokenFromCookie();
+        const maintenanceState = await fetchMaintenanceState(bearerToken);
+        const { updateAvailableFrom } = maintenanceState.data;
+
+        if (updateAvailableFrom) {
+            const updateButton = document.getElementById('update-button');
+            const updateTime = new Date(updateAvailableFrom);
+            const now = new Date();
+
+            // Format date to "yyy-mm-dd hh:mm:ss"
+            const formattedTime = `${updateTime.getFullYear()}-${String(updateTime.getMonth() + 1).padStart(2, '0')}-${String(updateTime.getDate()).padStart(2, '0')} ${String(updateTime.getHours()).padStart(2, '0')}:${String(updateTime.getMinutes()).padStart(2, '0')}:${String(updateTime.getSeconds()).padStart(2, '0')}`;
+
+            // Display time on button
+            if (updateButton) {
+                updateButton.textContent = `Enable at ${formattedTime}`;
+            }
+
+            const delay = updateTime.getTime() - now.getTime();
+
+            if (delay > 0) {
+                console.log(`Button will be activated in ${delay / 1000} seconds.`);
+                setTimeout(() => {
+                    if (updateButton) {
+                        updateButton.disabled = false;
+                        updateButton.textContent = 'Update Maintenance';
+                        console.log('Update button activated.');
+                    }
+                }, delay);
+            } else {
+                console.log('The specified time has already passed. Activating button immediately.');
+                if (updateButton) {
+                    updateButton.disabled = false;
+                    updateButton.textContent = 'Update Maintenance';
+                }
+            }
+        }
+    } catch (error) {
+        console.error('Error scheduling update button activation:', error);
     }
 
     // Event handler to clear the date picker
@@ -203,37 +281,40 @@ document.addEventListener("DOMContentLoaded", async () => {
     });    
 });
 
+// Event listener for accordion headers
 document.querySelectorAll('.accordion-header').forEach(header => {
     header.addEventListener('click', () => {
         const targetId = header.getAttribute('data-target');
         const targetElement = document.getElementById(targetId);
     
-        // Alle anderen collapses schließen
+        // Close all other accordion windows
         document.querySelectorAll('.accordion-collapse').forEach(collapse => {
             if (collapse !== targetElement) {
             collapse.classList.remove('show');
             }
         });
     
-        // Das angeklickte Element toggeln
+        // Toggle the clicked accordion element
         targetElement.classList.toggle('show');
     });
 });
 
+// Event listener for tab navigation
 document.querySelectorAll('.tab').forEach(tab => {
     tab.addEventListener('click', () => {
-        // Alle Tabs deaktivieren
+        // Deactivate all tabs
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        // Alle Panels ausblenden
+        // Hide all tab panels
         document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.remove('active'));
 
-        // Aktiven Tab und zugehöriges Panel aktivieren
+        // Activate the clicked tab and its corresponding panel
         tab.classList.add('active');
         const target = tab.getAttribute('data-target');
         document.querySelector(`.${target}`).classList.add('active');
     });
 }); 
 
+// Function to display miner events
 async function displayMinerEvents(minerId, bearerToken) {
     const eventList = document.getElementById('event-list');
     const minerEventsContainer = document.getElementById('miner-events');
