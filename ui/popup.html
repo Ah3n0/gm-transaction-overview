@@ -60,12 +60,22 @@
                         </div>
                         <div class="clan-info tab-panel">
                             <h3>Clan Members (<span id="clan-member-count">0</span>)</h3>
-                            <label for="sort-clan-members">Sort by:</label>
-                            <select id="sort-clan-members">
-                                <option value="alphabetical">Alphabetical</option>
-                                <option value="joinDate">Join Date</option>
-                                <option value="power">Power</option>
-                            </select>
+                            <div class="dropdown-container">
+                                <label for="sort-clan-members">Sort by:</label>
+                                <select id="sort-clan-members">
+                                    <option value="alphabetical">Alphabetical</option>
+                                    <option value="joinDate">Join Date</option>
+                                    <option value="power">Power</option>
+                                </select>
+                                <label for="filter-clan-members">Joined after:</label>
+                                <select id="filter-clan-members">
+                                    <option value="">None</option>
+                                    <option value="1">Last 1 Day</option>
+                                    <option value="2">Last 2 Days</option>
+                                    <option value="7">Last 7 Days</option>
+                                    <option value="14">Last 14 Days</option>
+                                </select>
+                            </div>
                             <ul id="clan-list"><li>Loading...</li></ul>
                         </div>
                         <div class="discount-info tab-panel">

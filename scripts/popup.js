@@ -257,6 +257,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         const clanList = document.getElementById('clan-list');
         const clanMemberCount = document.getElementById('clan-member-count');
         const sortSelect = document.getElementById('sort-clan-members');
+        const filterSelect = document.getElementById('filter-clan-members');
         clanList.innerHTML = '';
         clanMemberCount.textContent = clanMembers.length;
 
@@ -299,8 +300,27 @@ document.addEventListener("DOMContentLoaded", async () => {
                 renderClanMembers(sortedMembers);
             }
 
+            function filterClanMembers(days) {
+                if (!days) {
+                    renderClanMembers(clanMembers);
+                    return;
+                }
+                const now = new Date();
+                const filteredMembers = clanMembers.filter(member => {
+                    const joinDate = new Date(member.joinDate);
+                    const diffTime = Math.abs(now - joinDate);
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    return diffDays <= days;
+                });
+                renderClanMembers(filteredMembers);
+            }
+
             sortSelect.addEventListener('change', (event) => {
                 sortClanMembers(event.target.value);
+            });
+
+            filterSelect.addEventListener('change', (event) => {
+                filterClanMembers(event.target.value ? parseInt(event.target.value) : null);
             });
 
             sortClanMembers(sortSelect.value);
