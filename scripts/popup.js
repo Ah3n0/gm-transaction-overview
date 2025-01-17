@@ -128,6 +128,20 @@ document.addEventListener("DOMContentLoaded", async () => {
         document.getElementById("alias").textContent = "Error";
     }
 
+    // Toggle user-info section
+    const userInfo = document.querySelector('.user-info');
+    const toggleIcon = userInfo.querySelector('.toggle-icon');
+
+    userInfo.querySelector('.toggle-container').addEventListener('click', () => {
+        userInfo.classList.toggle('collapsed');
+        toggleIcon.textContent = userInfo.classList.contains('collapsed') ? '>' : '<';
+
+        // Adjust the width of other containers
+        document.querySelectorAll('.container, .nft-info, .discount-info, .mw-info, .rewards-info, .clan-info').forEach(container => {
+            container.style.width = userInfo.classList.contains('collapsed') ? '600px' : '500px';
+        });
+    });
+
     // Fetch all miners
     try {
         const bearerToken = await getBearerTokenFromCookie();
@@ -269,7 +283,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         const clanMemberCount = document.getElementById('clan-member-count');
         const sortSelect = document.getElementById('sort-clan-members');
         const filterSelect = document.getElementById('filter-clan-members');
-        const abilityFilterSelect = document.getElementById('filter-abilities');
         const totalSumElement = document.getElementById('total-sum');
         clanList.innerHTML = '';
         clanMemberCount.textContent = clanMembers.length;

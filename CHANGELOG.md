@@ -1,6 +1,10 @@
 # Changelog
 
-## Version 0.6.1
+## Version 0.6.3
+### Added
+- user panel collaps
+
+## Version 0.6.2
 ### Added
 - Marked sold nft as sold
 
