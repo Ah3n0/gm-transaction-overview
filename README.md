@@ -47,7 +47,7 @@ This Chrome extension allows you to inspect cookies, extract the `access_token` 
 4. **User-Friendly Interface**: Simple and intuitive design with clear instructions.
 5. **Custom Date Range**: Add functionality to select a specific start date for reports.
 6. **NFT Overview**: List all belonging NFTs and its upgrades.
-7. **Maintanence**: Get current maintanence information and service button.
+7. **Maintenance**: Get current maintenance information and service button. Auto click is activated.
 
 ---
 
@@ -68,7 +68,7 @@ Here are some planned features and improvements for future updates:
 1. **Background Processing**: Allow downloads to continue processing even when the popup is closed.
 2. **Wallet Integration**: Add BTC wallet support and enable wallet selection.
 3. **Buy/Sell Data**: Include transactions unrelated to GMT/BTC wallets in the generated files.
-4. **Service Button**: Enable service button and hit service (automaticly)
+4. Show Clan joiner and leaver.
 
 ---
 

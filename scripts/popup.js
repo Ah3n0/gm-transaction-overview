@@ -233,10 +233,10 @@ document.addEventListener("DOMContentLoaded", async () => {
             const updateTime = new Date(updateAvailableFrom);
             const now = new Date();
 
-            // Format date to "yyy-mm-dd hh:mm:ss"
+            // Format date to "yyyy-mm-dd hh:mm:ss"
             const formattedTime = `${updateTime.getFullYear()}-${String(updateTime.getMonth() + 1).padStart(2, '0')}-${String(updateTime.getDate()).padStart(2, '0')} ${String(updateTime.getHours()).padStart(2, '0')}:${String(updateTime.getMinutes()).padStart(2, '0')}:${String(updateTime.getSeconds()).padStart(2, '0')}`;
 
-            // Display time on button
+            // Display the formatted time on the button
             if (updateButton) {
                 updateButton.textContent = `Enable at ${formattedTime}`;
             }
@@ -245,23 +245,16 @@ document.addEventListener("DOMContentLoaded", async () => {
 
             if (delay > 0) {
                 console.log(`Button will be activated in ${delay / 1000} seconds.`);
-                setTimeout(() => {
-                    if (updateButton) {
-                        updateButton.disabled = false;
-                        updateButton.textContent = 'Update Maintenance';
-                        console.log('Update button activated.');
-                    }
+                setTimeout(async () => {
+                    await handleButtonActivation(updateButton, bearerToken);
                 }, delay);
             } else {
                 console.log('The specified time has already passed. Activating button immediately.');
-                if (updateButton) {
-                    updateButton.disabled = false;
-                    updateButton.textContent = 'Update Maintenance';
-                }
+                await handleButtonActivation(updateButton, bearerToken);
             }
         }
     } catch (error) {
-        console.error('Error scheduling update button activation:', error);
+        console.error('Error managing update button:', error);
     }
 
     // Event handler to clear the date picker
@@ -352,5 +345,46 @@ async function displayMinerEvents(minerId, bearerToken) {
     } catch (error) {
         console.error('Error fetching miner events:', error);
         eventList.innerHTML = '<li>Error fetching events.</li>';
+    }
+}
+
+// Handle button activation and subsequent actions
+async function handleButtonActivation(button, bearerToken) {
+    if (button) {
+        button.disabled = false;
+        button.textContent = 'Update Maintenance';
+        console.log('Update button activated.');
+
+        // Automatically push the service when the button is enabled
+        try {
+            const serviceResponse = await pushService(bearerToken);
+            const { updateAvailableFrom: newUpdateTime } = serviceResponse.data;
+
+            if (newUpdateTime) {
+                // Format the new time
+                const formattedNewTime = new Date(newUpdateTime).toISOString().replace('T', ' ').slice(0, 19);
+                console.log(`New update time received: ${formattedNewTime}`);
+
+                // Deactivate the button and update the text
+                button.disabled = true;
+                button.textContent = `Enable at ${formattedNewTime}`;
+
+                // Schedule the next activation
+                const newUpdateDelay = new Date(newUpdateTime).getTime() - new Date().getTime();
+                if (newUpdateDelay > 0) {
+                    setTimeout(async () => {
+                        await handleButtonActivation(button, bearerToken);
+                    }, newUpdateDelay);
+                } else {
+                    console.log('New update time has already passed. Keeping button enabled for manual action.');
+                    button.disabled = false;
+                    button.textContent = 'Update Maintenance';
+                }
+            }
+        } catch (error) {
+            console.error('Error pushing service:', error);
+            button.disabled = false;
+            button.textContent = 'Retry Update';
+        }
     }
 }
