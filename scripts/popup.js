@@ -9,7 +9,7 @@ import {
 } from './config.js';
 
 import { writeToCSV } from './utils/file.js';
-import { fetchDiscount, fetchNFT, fetchMaintenanceState, fetchUserRewards, fetchClanMember } from './utils/api.js';
+import { fetchDiscount, fetchNFT, fetchMaintenanceState, fetchUserRewards, fetchClanMember, fetchMarketplaceOrders } from './utils/api.js';
 import { formatDate } from './utils/time.js';
 import { mapToKoinly, mapToBlockpit } from './utils/mappers.js';
 import { getBearerTokenFromCookie } from './utils/cookies.js';
@@ -134,6 +134,12 @@ document.addEventListener("DOMContentLoaded", async () => {
         const data = await fetchNFT(0, bearerToken);
         const miners = data.data.array;
 
+        // Fetch marketplace orders
+        const marketplaceOrders = await fetchMarketplaceOrders(bearerToken);
+        const soldNftIds = marketplaceOrders.data.array
+            .filter(order => order.status === "success")
+            .map(order => order.nftId);
+
         minerList.innerHTML = '';
         miners.forEach(miner => {
             const minerData = miner.nfts[0];
@@ -142,11 +148,16 @@ document.addEventListener("DOMContentLoaded", async () => {
                 return;
             }
 
+            const isSold = soldNftIds.includes(minerData.id);
+
             const card = document.createElement('div');
-            card.className = 'miner-card';
+            card.className = `miner-card ${isSold ? 'sold' : ''}`;
 
             card.innerHTML = `
-                <img src="${minerData.smallImageUrl}" alt="${minerData.name}">
+                <div class="image-container">
+                    <img src="${minerData.smallImageUrl}" alt="${minerData.name}">
+                    ${isSold ? '<div class="sold-stamp">Sold</div>' : ''}
+                </div>
                 <h4>${minerData.name}</h4>
                 <p>Value: ${miner.value || 0} GMT</p>
             `;

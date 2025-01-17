@@ -1,5 +1,18 @@
 # Changelog
 
+## Version 0.6.1
+### Added
+- Marked sold nft as sold
+
+## Version 0.6.1
+### Added
+- Aditional Clan Member information
+
+## Version 0.6.0
+### Added
+- Clan Member information
+- Reward information
+
 ## Version 0.5.0
 ### Added
 - Maintenance information
