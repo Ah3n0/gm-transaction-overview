@@ -260,47 +260,51 @@ document.addEventListener("DOMContentLoaded", async () => {
         clanList.innerHTML = '';
         clanMemberCount.textContent = clanMembers.length;
 
-        function renderClanMembers(members) {
-            clanList.innerHTML = '';
-            members.forEach(member => {
-                const joinDate = new Date(member.joinDate);
-                const utcJoinDate = joinDate.toUTCString();
-                const currentLocalTime = new Date().toLocaleString("en-US", { timeZone: member.timezone || "UTC" });
+        if (clanMembers.length === 0) {
+            clanList.innerHTML = '<li>No clan members found. You are in Solo Mining.</li>';
+        } else {
+            function renderClanMembers(members) {
+                clanList.innerHTML = '';
+                members.forEach(member => {
+                    const joinDate = new Date(member.joinDate);
+                    const utcJoinDate = joinDate.toUTCString();
+                    const currentLocalTime = new Date().toLocaleString("en-US", { timeZone: member.timezone || "UTC" });
 
-                const listItem = document.createElement('li');
-                listItem.innerHTML = `
-                    <strong>Alias:</strong> ${member.alias} <br>
-                    <strong>Power:</strong> ${member.power} <br>
-                    <strong>Join Date (UTC):</strong> ${utcJoinDate} <br>
-                    <strong>Current Local Time:</strong> ${currentLocalTime}
-                `;
-                clanList.appendChild(listItem);
-            });
-        }
-
-        function sortClanMembers(criteria) {
-            let sortedMembers;
-            switch (criteria) {
-                case 'alphabetical':
-                    sortedMembers = clanMembers.sort((a, b) => a.alias.localeCompare(b.alias));
-                    break;
-                case 'joinDate':
-                    sortedMembers = clanMembers.sort((a, b) => new Date(a.joinDate) - new Date(b.joinDate));
-                    break;
-                case 'power':
-                    sortedMembers = clanMembers.sort((a, b) => b.power - a.power);
-                    break;
-                default:
-                    sortedMembers = clanMembers;
+                    const listItem = document.createElement('li');
+                    listItem.innerHTML = `
+                        <strong>Alias:</strong> ${member.alias} <br>
+                        <strong>Power:</strong> ${member.power} <br>
+                        <strong>Join Date (UTC):</strong> ${utcJoinDate} <br>
+                        <strong>Current Local Time:</strong> ${currentLocalTime}
+                    `;
+                    clanList.appendChild(listItem);
+                });
             }
-            renderClanMembers(sortedMembers);
+
+            function sortClanMembers(criteria) {
+                let sortedMembers;
+                switch (criteria) {
+                    case 'alphabetical':
+                        sortedMembers = clanMembers.sort((a, b) => a.alias.localeCompare(b.alias));
+                        break;
+                    case 'joinDate':
+                        sortedMembers = clanMembers.sort((a, b) => new Date(a.joinDate) - new Date(b.joinDate));
+                        break;
+                    case 'power':
+                        sortedMembers = clanMembers.sort((a, b) => b.power - a.power);
+                        break;
+                    default:
+                        sortedMembers = clanMembers;
+                }
+                renderClanMembers(sortedMembers);
+            }
+
+            sortSelect.addEventListener('change', (event) => {
+                sortClanMembers(event.target.value);
+            });
+
+            sortClanMembers(sortSelect.value);
         }
-
-        sortSelect.addEventListener('change', (event) => {
-            sortClanMembers(event.target.value);
-        });
-
-        sortClanMembers(sortSelect.value);
     } catch (error) {
         console.error('Error fetching clan members:', error);
         document.getElementById('clan-list').innerHTML = '<li>Error loading clan members.</li>';
