@@ -231,10 +231,13 @@ document.addEventListener("DOMContentLoaded", async () => {
         const rewardsList = document.getElementById('rewards-list');
         rewardsList.innerHTML = '';
         rewards.forEach(reward => {
+            const createdAt = new Date(reward.createdAt);
+            const utcCreatedAt = createdAt.toUTCString();
+
             const listItem = document.createElement('li');
             listItem.innerHTML = `
                 <strong>Round ID:</strong> ${reward.roundId} <br>
-                <strong>Created At:</strong> ${reward.createdAt} <br>
+                <strong>Created At (UTC):</strong> ${utcCreatedAt} <br>
                 <strong>GMT Value:</strong> ${reward.gmtValue} <br>
                 <strong>Multiplier:</strong> ${reward.multiplier}
             `;
@@ -249,22 +252,55 @@ document.addEventListener("DOMContentLoaded", async () => {
     try {
         const bearerToken = await getBearerTokenFromCookie();
         const clanData = await fetchClanMember(bearerToken);
-        const clanMembers = clanData.data.usersForClient;
+        let clanMembers = clanData.data.usersForClient;
 
         const clanList = document.getElementById('clan-list');
         const clanMemberCount = document.getElementById('clan-member-count');
+        const sortSelect = document.getElementById('sort-clan-members');
         clanList.innerHTML = '';
         clanMemberCount.textContent = clanMembers.length;
 
-        clanMembers.forEach(member => {
-            const listItem = document.createElement('li');
-            listItem.innerHTML = `
-                <strong>Alias:</strong> ${member.alias} <br>
-                <strong>Power:</strong> ${member.power} <br>
-                <strong>Join Date:</strong> ${member.joinDate}
-            `;
-            clanList.appendChild(listItem);
+        function renderClanMembers(members) {
+            clanList.innerHTML = '';
+            members.forEach(member => {
+                const joinDate = new Date(member.joinDate);
+                const utcJoinDate = joinDate.toUTCString();
+                const currentLocalTime = new Date().toLocaleString("en-US", { timeZone: member.timezone || "UTC" });
+
+                const listItem = document.createElement('li');
+                listItem.innerHTML = `
+                    <strong>Alias:</strong> ${member.alias} <br>
+                    <strong>Power:</strong> ${member.power} <br>
+                    <strong>Join Date (UTC):</strong> ${utcJoinDate} <br>
+                    <strong>Current Local Time:</strong> ${currentLocalTime}
+                `;
+                clanList.appendChild(listItem);
+            });
+        }
+
+        function sortClanMembers(criteria) {
+            let sortedMembers;
+            switch (criteria) {
+                case 'alphabetical':
+                    sortedMembers = clanMembers.sort((a, b) => a.alias.localeCompare(b.alias));
+                    break;
+                case 'joinDate':
+                    sortedMembers = clanMembers.sort((a, b) => new Date(a.joinDate) - new Date(b.joinDate));
+                    break;
+                case 'power':
+                    sortedMembers = clanMembers.sort((a, b) => b.power - a.power);
+                    break;
+                default:
+                    sortedMembers = clanMembers;
+            }
+            renderClanMembers(sortedMembers);
+        }
+
+        sortSelect.addEventListener('change', (event) => {
+            sortClanMembers(event.target.value);
         });
+
+        sortClanMembers(sortSelect.value);
     } catch (error) {
         console.error('Error fetching clan members:', error);
         document.getElementById('clan-list').innerHTML = '<li>Error loading clan members.</li>';

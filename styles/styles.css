@@ -292,43 +292,6 @@ button:active {
     border-bottom: none;
 }
 
-/* Discount Info Section */
-.discount-info {
-    background-color: #ffffff;
-    border-radius: 12px;
-    padding: 20px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    margin-top: 20px;
-    font-size: 1rem;
-    color: #333;
-}
-
-/* Discount List */
-.discount-list {
-    margin: 10px 0;
-    padding: 0;
-    list-style: none;
-}
-
-.discount-list p {
-    font-size: 1rem;
-    color: #555;
-    margin: 5px 0;
-}
-
-.discount-info p {
-    font-size: 1rem;
-    margin: 8px 0;
-    color: #333;
-    line-height: 1.6;
-}
-
-.discount-info strong {
-    margin: 10px 0;
-    font-size: 1rem;
-    color: #555;
-}
-
 /* Update Button */
 #update-button {
     display: block;
@@ -363,19 +326,6 @@ button:active {
 }
 
 /* Highlighted Discount Values */
-#token-discount,
-#service-discount,
-#level-discount,
-#solo-discount,
-#gmt-balance,
-#gmt-locked,
-#active-maintenance-days,
-#maintenance-without-discount,
-#total-maintenance {
-    font-weight: bold;
-    color: #333;
-}
-
 #service-discount,
 #level-discount,
 #solo-discount {
@@ -424,4 +374,28 @@ button:disabled {
 
 .rewards-info li:last-child, .clan-info li:last-child {
     border-bottom: none;
+}
+
+/* Dropdown Menu */
+select {
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 1rem;
+    background-color: #f8f9fa;
+    color: #333;
+    margin-bottom: 20px;
+    cursor: pointer;
+    transition: background-color 0.3s, border-color 0.3s;
+}
+
+select:hover {
+    background-color: #e2e6ea;
+    border-color: #007bff;
+}
+
+select:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
 }

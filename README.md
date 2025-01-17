@@ -48,6 +48,7 @@ This Chrome extension allows you to inspect cookies, extract the `access_token` 
 5. **Custom Date Range**: Add functionality to select a specific start date for reports.
 6. **NFT Overview**: List all belonging NFTs and its upgrades.
 7. **Maintenance**: Get current maintenance information and service button. Auto click is activated.
+8. Clan Member and personal rewards are shown. Filter included.
 
 ---
 
@@ -59,7 +60,6 @@ We welcome contributions to improve this project. To get started:
 3. Make your changes and commit them with descriptive messages.
 4. Push your branch to your fork.
 5. Submit a Pull Request (PR) to merge your changes into the original repository.
-6. Clan Member and personal rewards are shown.
 
 ---
 

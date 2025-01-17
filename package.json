@@ -1,7 +1,7 @@
 {
     "name": "transfer-request",
     "type": "module",
-    "version": "0.6.0",
+    "version": "0.6.1",
     "license": "MIT",
     "scripts": {
         "test": "node run-tests.js",
