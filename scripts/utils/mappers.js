@@ -1,50 +1,27 @@
+import { KOINLY_HEADER, BLOCKPIT_HEADER } from '../config.js';
 import { formatDate } from './time.js';
-
-function mapCommonFields(entry) {
-    return {
-        Date: formatDate(entry.createdAt),
-        Label: entry.type,
-        "Sent Currency": "GMT",
-        "Outgoing Asset": "GMT",
-        "Sent Amount": entry.value,
-        "Outgoing Amount": entry.value,
-        "Received Amount": "",
-        "Incoming Amount": "",
-        "Received Currency": "",
-        "Incoming Asset": "",
-        "Fee Amount": "",
-        "Fee Asset (optional)": "",
-        "Fee Currency": "",
-        "Net Worth Amount": "",
-        "Net Worth Currency": "",
-        "Fee Amount (optional)": "",
-        "Comment (optional)": entry.walletAddress,
-        Description: entry.walletAddress,
-        "Trx. ID (optional)": entry.blockchainTxId,
-        TxHash: entry.blockchainTxId,
-    };
-}
 
 /**
  * Maps a transaction row to Koinly format.
  * @param {Object} row - Transaction data.
  * @returns {Object} Mapped transaction for Koinly.
  */
-export function mapToKoinly(entry) {
-    const commonFields = mapCommonFields(entry);
+export function mapToKoinly(row) {
+    const formattedDate = formatDate(row["createdAt"], 1); // Adjust time by 1 hour
+
     return {
-        Date: commonFields.Date,
-        "Sent Amount": commonFields["Sent Amount"],
-        "Sent Currency": commonFields["Sent Currency"],
-        "Received Amount": commonFields["Received Amount"],
-        "Received Currency": commonFields["Received Currency"],
-        "Fee Amount": commonFields["Fee Amount"],
-        "Fee Currency": commonFields["Fee Currency"],
-        "Net Worth Amount": commonFields["Net Worth Amount"],
-        "Net Worth Currency": commonFields["Net Worth Currency"],
-        Label: commonFields.Label,
-        Description: commonFields.Description,
-        TxHash: commonFields.TxHash,
+        Date: formattedDate,
+        "Sent Amount": row["type"] === "deposit" ? "" : row["value"],
+        "Sent Currency": row["type"] === "deposit" ? "" : "GMT",
+        "Received Amount": row["type"] === "deposit" ? row["value"] : "",
+        "Received Currency": row["type"] === "deposit" ? "GMT" : "",
+        "Fee Amount": "",
+        "Fee Currency": "",
+        "Net Worth Amount": "",
+        "Net Worth Currency": "",
+        Label: row["type"] === "deposit" ? "Deposit" : "Withdrawal",
+        Description: row["fromType"] || "",
+        TxHash: row["transactionId"] || "",
     };
 }
 
@@ -53,23 +30,20 @@ export function mapToKoinly(entry) {
  * @param {Object} row - Transaction data.
  * @returns {Object} Mapped transaction for Blockpit.
  */
-export function mapToBlockpit(entry) {
-    const commonFields = mapCommonFields(entry);
+export function mapToBlockpit(row) {
+    const formattedDate = formatDate(row["createdAt"]);
+
     return {
-        "Date (UTC)": commonFields.Date,
-        "Integration Name": "GoMining",
-        Label: commonFields.Label,
-        "Outgoing Asset": commonFields["Outgoing Asset"],
-        "Outgoing Amount": commonFields["Outgoing Amount"],
-        "Incoming Asset": commonFields["Incoming Asset"],
-        "Incoming Amount": commonFields["Incoming Amount"],
-        "Fee Asset (optional)": commonFields["Fee Asset (optional)"],
-        "Fee Amount (optional)": commonFields["Fee Amount (optional)"],
-        "Comment (optional)": commonFields["Comment (optional)"],
-        "Trx. ID (optional)": commonFields["Trx. ID (optional)"],
+        "Date (UTC)": formattedDate,
+        "Integration Name": "Gomining Portal",
+        Label: row["type"] === "deposit" ? "Deposit" : "Payment",
+        "Outgoing Asset": row["type"] === "deposit" ? "" : "GMT",
+        "Outgoing Amount": row["type"] === "deposit" ? "" : row["value"],
+        "Incoming Asset": row["type"] === "deposit" ? "GMT" : "",
+        "Incoming Amount": row["type"] === "deposit" ? row["value"] : "",
+        "Fee Asset (optional)": "",
+        "Fee Amount (optional)": "",
+        "Comment (optional)": row["fromType"] || "",
+        "Trx. ID (optional)": row["transactionId"] || "",
     };
 }
-
-// Export functions globally for the worker
-self.mapToKoinly = mapToKoinly;
-self.mapToBlockpit = mapToBlockpit;
