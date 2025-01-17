@@ -1,5 +1,4 @@
 import { BASE_URL } from "../config.js";
-
 import { fetchData, fetchUpgradesNFT } from './api.js';
 
 export function updateStatusLabel(statusLabel, message, isError) {

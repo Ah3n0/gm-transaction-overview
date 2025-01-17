@@ -60,3 +60,10 @@ export async function fetchMaintenanceState(bearerToken) {
     const body = {};
     return fetchFromAPI(MAINTENANCE_STATE_URL, body, bearerToken);
 }
+
+// Export functions globally for the worker
+self.fetchData = fetchData;
+self.fetchNFT = fetchNFT;
+self.fetchUpgradesNFT = fetchUpgradesNFT;
+self.fetchDiscount = fetchDiscount;
+self.fetchMaintenanceState = fetchMaintenanceState;

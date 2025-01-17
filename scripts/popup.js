@@ -1,5 +1,4 @@
 import { 
-    BASE_URL, 
     AUTH_URL, 
     OUTPUT_CSV_FILE, 
     KOINLY_CSV_FILE, 
@@ -10,7 +9,7 @@ import {
 } from './config.js';
 
 import { writeToCSV } from './utils/file.js';
-import { fetchData, fetchDiscount, fetchNFT, fetchUpgradesNFT, fetchMaintenanceState } from './utils/api.js';
+import { fetchDiscount, fetchNFT, fetchMaintenanceState } from './utils/api.js';
 import { formatDate } from './utils/time.js';
 import { mapToKoinly, mapToBlockpit } from './utils/mappers.js';
 import { getBearerTokenFromCookie } from './utils/cookies.js';
@@ -21,8 +20,8 @@ async function main() {
     const button = document.getElementById("inspect-cookies");
     const loader = document.getElementById("loader");
     const statusLabel = document.getElementById("status-label");
-    const progressLabel = document.createElement("div");
     const datePicker = document.getElementById("start-date-picker");
+    const progressLabel = document.createElement("div");
     progressLabel.id = "progress-label";
     progressLabel.style.marginTop = "10px";
     progressLabel.style.color = "#555";
@@ -41,9 +40,7 @@ async function main() {
         }
 
         // Get the selected start date
-        const startDate = datePicker.value
-            ? new Date(`${datePicker.value}T00:00:00`)
-            : null;
+        const startDate = datePicker.value ? new Date(`${datePicker.value}T00:00:00`) : null;
 
         // Get bearer token from cookies
         const bearerToken = await getBearerTokenFromCookie().catch((error) => {

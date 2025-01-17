@@ -5,18 +5,21 @@
  * @param {Array<string>} headers - The headers for the CSV file.
  */
 export function writeToCSV(filename, data, headers) {
-    const rows = [headers.join(",")]; // Add CSV header
-    data.forEach((entry) => {
-        const row = headers.map((key) => JSON.stringify(entry[key] || "")).join(",");
-        rows.push(row);
-    });
+    const csvContent = [
+        headers.join(","),
+        ...data.map(row => headers.map(header => JSON.stringify(row[header] || "")).join(","))
+    ].join("\n");
 
-    const csvContent = rows.join("\n");
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
     const url = URL.createObjectURL(blob);
-
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    a.click();
+    link.setAttribute("href", url);
+    link.setAttribute("download", filename);
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
 }
+
+// Export function globally for the worker
+self.writeToCSV = writeToCSV;
