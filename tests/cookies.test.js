@@ -31,11 +31,13 @@ global.chrome = {
             console.error("Test 2 failed: Expected an error when no token is found.\n");
         } catch (error) {
             assert.strictEqual(
-                error,
+                error.message,
                 "No access_token cookie found for GoMining (gomining.com). Please log in to continue.",
                 "Should throw an error when no token is found"
             );
         }
+
+        console.log("All tests passed successfully.");
     } catch (error) {
         // Catch and log any unexpected errors during testing
         console.error(`Test failed: ${error.message}\n`);

@@ -41,7 +41,7 @@ require("../scripts/utils/time.js").formatDate = (date, hourOffset = 0) => {
         );
 
         // Test Case 2: mapToKoinly with withdrawal
-        const withdrawalRow = { ...sampleRow, type: "withdrawal" };
+        const withdrawalRow = { ...sampleRow, type: "withdraw" };
         const expectedKoinlyWithdrawalOutput = {
             Date: "2025-01-15T12:00:00Z_formatted_with_offset_1",
             "Sent Amount": 1000,
@@ -66,7 +66,7 @@ require("../scripts/utils/time.js").formatDate = (date, hourOffset = 0) => {
         // Test Case 3: mapToBlockpit with deposit
         const expectedBlockpitOutput = {
             "Date (UTC)": "2025-01-15T12:00:00Z_formatted_with_offset_0",
-            "Integration Name": "Gomining Portal",
+            "Integration Name": "GoMining",
             Label: "Deposit",
             "Outgoing Asset": "",
             "Outgoing Amount": "",
@@ -87,7 +87,7 @@ require("../scripts/utils/time.js").formatDate = (date, hourOffset = 0) => {
         // Test Case 4: mapToBlockpit with withdrawal
         const expectedBlockpitWithdrawalOutput = {
             "Date (UTC)": "2025-01-15T12:00:00Z_formatted_with_offset_0",
-            "Integration Name": "Gomining Portal",
+            "Integration Name": "GoMining",
             Label: "Payment",
             "Outgoing Asset": "GMT",
             "Outgoing Amount": 1000,
@@ -104,6 +104,8 @@ require("../scripts/utils/time.js").formatDate = (date, hourOffset = 0) => {
             expectedBlockpitWithdrawalOutput,
             "mapToBlockpit did not map the withdrawal transaction correctly"
         );
+
+        console.log("All tests passed successfully.");
     } catch (error) {
         console.error(`Test failed: ${error.message}\n`);
     } finally {

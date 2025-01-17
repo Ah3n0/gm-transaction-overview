@@ -41,6 +41,8 @@ import { formatDate } from "../scripts/utils/time.js";
                 "Should throw an Error for invalid date input"
             );
         }
+
+        console.log("All tests passed successfully.");
     } catch (error) {
         console.error(`Test failed: ${error.message}\n`);
     }

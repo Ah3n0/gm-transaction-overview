@@ -73,6 +73,8 @@ global.document = {
             true,
             "Anchor element's click method was not called for missing headers"
         );
+
+        console.log("All tests passed successfully.");
     } catch (error) {
         // Log errors if any test fails
         console.error("Test failed:", error.message);

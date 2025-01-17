@@ -103,6 +103,8 @@ import { main, updateStatusLabel } from "../scripts/popup.js";
         await main();
 
         assert.strictEqual(mockStatusLabel2.textContent, "Download successful!", "Should indicate successful download");
+
+        console.log("All tests passed successfully.");
     } catch (error) {
         console.error(`Test failed: ${error.message}\n`);
     }

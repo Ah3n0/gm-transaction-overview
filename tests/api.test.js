@@ -17,7 +17,7 @@ global.fetch = (url) => {
 (async () => {
     try {
         // Test Case 1: Successful API call
-        const data = await fetchData("https://api.example.com/data");
+        const data = await fetchData(0, "mockBearerToken");
         assert.deepStrictEqual(
             data,
             { data: "mock_data" },
@@ -33,7 +33,7 @@ global.fetch = (url) => {
         };
 
         try {
-            await fetchData("https://api.example.com/data");
+            await fetchData(0, "mockBearerToken");
             console.error("Test 2 failed: Expected an error on network failure.\n");
         } catch (error) {
             assert.strictEqual(
@@ -42,6 +42,8 @@ global.fetch = (url) => {
                 "Should throw a 'Network error' when the API call fails"
             );
         }
+
+        console.log("All tests passed successfully.");
     } catch (error) {
         // Log unexpected errors during test execution
         console.error(`Test failed: ${error.message}\n`);

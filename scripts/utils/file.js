@@ -20,6 +20,3 @@ export function writeToCSV(filename, data, headers) {
     link.click();
     document.body.removeChild(link);
 }
-
-// Export function globally for the worker
-self.writeToCSV = writeToCSV;
