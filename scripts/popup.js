@@ -258,6 +258,8 @@ document.addEventListener("DOMContentLoaded", async () => {
         const clanMemberCount = document.getElementById('clan-member-count');
         const sortSelect = document.getElementById('sort-clan-members');
         const filterSelect = document.getElementById('filter-clan-members');
+        const abilityFilterSelect = document.getElementById('filter-abilities');
+        const totalSumElement = document.getElementById('total-sum');
         clanList.innerHTML = '';
         clanMemberCount.textContent = clanMembers.length;
 
@@ -266,20 +268,56 @@ document.addEventListener("DOMContentLoaded", async () => {
         } else {
             function renderClanMembers(members) {
                 clanList.innerHTML = '';
+                let totalSum = 0;
                 members.forEach(member => {
                     const joinDate = new Date(member.joinDate);
                     const utcJoinDate = joinDate.toUTCString();
-                    const currentLocalTime = new Date().toLocaleString("en-US", { timeZone: member.timezone || "UTC" });
+                    const isOwner = member.isOwner ? 'clan-owner' : '';
+
+                    const abilities = member.usedNftGameAbilities || [];
+                    const abilityCounts = {
+                        "2ec728e7-f31f-4df3-b486-5e82a4976563": 0,
+                        "44e8af7d-bcfb-4606-a111-5d6ccf1ab463": 0,
+                        "a1f33226-2b51-4b6e-bbfc-eb0a20f0de1c": 0,
+                        "ac859dd7-3981-4a10-886b-7c0b03b7a498": 0
+                    };
+
+                    abilities.forEach(ability => {
+                        if (abilityCounts.hasOwnProperty(ability.nftGameAbilityId)) {
+                            abilityCounts[ability.nftGameAbilityId] = ability.count;
+                        }
+                    });
+
+                    const redSum = abilityCounts["44e8af7d-bcfb-4606-a111-5d6ccf1ab463"] * 1;
+                    const purpleSum = abilityCounts["a1f33226-2b51-4b6e-bbfc-eb0a20f0de1c"] * 9;
+                    const greenSum = abilityCounts["ac859dd7-3981-4a10-886b-7c0b03b7a498"] * 1;
+                    const totalMemberSum = redSum + purpleSum + greenSum;
+                    totalSum += totalMemberSum;
 
                     const listItem = document.createElement('li');
+                    listItem.className = `clan-member`;
                     listItem.innerHTML = `
-                        <strong>Alias:</strong> ${member.alias} <br>
-                        <strong>Power:</strong> ${member.power} <br>
-                        <strong>Join Date (UTC):</strong> ${utcJoinDate} <br>
-                        <strong>Current Local Time:</strong> ${currentLocalTime}
+                        <div class="summary ${isOwner}">
+                            <strong>Alias:</strong> ${member.alias}
+                        </div>
+                        <div class="details">
+                            <strong>Power:</strong> ${member.power} <br>
+                            <strong>Join Date (UTC):</strong> ${utcJoinDate} <br>
+                            <strong>Ability 1:</strong> <span>${abilityCounts["2ec728e7-f31f-4df3-b486-5e82a4976563"]}</span> <br>
+                            <strong>Ability 2:</strong> <span class="red">${abilityCounts["44e8af7d-bcfb-4606-a111-5d6ccf1ab463"]} (${redSum} GMT)</span> <br>
+                            <strong>Ability 3:</strong> <span class="purple">${abilityCounts["a1f33226-2b51-4b6e-bbfc-eb0a20f0de1c"]} (${purpleSum} GMT)</span> <br>
+                            <strong>Ability 4:</strong> <span class="green">${abilityCounts["ac859dd7-3981-4a10-886b-7c0b03b7a498"]} (${greenSum} GMT)</span> <br>
+                            <strong>Total:</strong> ${totalMemberSum} GMT
+                        </div>
                     `;
+
+                    listItem.querySelector('.summary').addEventListener('click', () => {
+                        listItem.classList.toggle('open');
+                    });
+
                     clanList.appendChild(listItem);
                 });
+                totalSumElement.innerHTML = `<strong>Total Sum:</strong> ${totalSum} GMT`;
             }
 
             function sortClanMembers(criteria) {
@@ -293,6 +331,29 @@ document.addEventListener("DOMContentLoaded", async () => {
                         break;
                     case 'power':
                         sortedMembers = clanMembers.sort((a, b) => b.power - a.power);
+                        break;
+                    case 'ability1':
+                        sortedMembers = clanMembers.sort((a, b) => b.usedNftGameAbilities?.find(a => a.nftGameAbilityId === "2ec728e7-f31f-4df3-b486-5e82a4976563")?.count - a.usedNftGameAbilities?.find(a => a.nftGameAbilityId === "2ec728e7-f31f-4df3-b486-5e82a4976563")?.count);
+                        break;
+                    case 'ability2':
+                        sortedMembers = clanMembers.sort((a, b) => b.usedNftGameAbilities?.find(a => a.nftGameAbilityId === "44e8af7d-bcfb-4606-a111-5d6ccf1ab463")?.count - a.usedNftGameAbilities?.find(a => a.nftGameAbilityId === "44e8af7d-bcfb-4606-a111-5d6ccf1ab463")?.count);
+                        break;
+                    case 'ability3':
+                        sortedMembers = clanMembers.sort((a, b) => b.usedNftGameAbilities?.find(a => a.nftGameAbilityId === "a1f33226-2b51-4b6e-bbfc-eb0a20f0de1c")?.count - a.usedNftGameAbilities?.find(a => a.nftGameAbilityId === "a1f33226-2b51-4b6e-bbfc-eb0a20f0de1c")?.count);
+                        break;
+                    case 'ability4':
+                        sortedMembers = clanMembers.sort((a, b) => b.usedNftGameAbilities?.find(a => a.nftGameAbilityId === "ac859dd7-3981-4a10-886b-7c0b03b7a498")?.count - a.usedNftGameAbilities?.find(a => a.nftGameAbilityId === "ac859dd7-3981-4a10-886b-7c0b03b7a498")?.count);
+                        break;
+                    case 'total':
+                        sortedMembers = clanMembers.sort((a, b) => {
+                            const aTotal = (a.usedNftGameAbilities?.find(a => a.nftGameAbilityId === "44e8af7d-bcfb-4606-a111-5d6ccf1ab463")?.count || 0) * 1 +
+                                           (a.usedNftGameAbilities?.find(a => a.nftGameAbilityId === "a1f33226-2b51-4b6e-bbfc-eb0a20f0de1c")?.count || 0) * 9 +
+                                           (a.usedNftGameAbilities?.find(a => a.nftGameAbilityId === "ac859dd7-3981-4a10-886b-7c0b03b7a498")?.count || 0) * 1;
+                            const bTotal = (b.usedNftGameAbilities?.find(a => a.nftGameAbilityId === "44e8af7d-bcfb-4606-a111-5d6ccf1ab463")?.count || 0) * 1 +
+                                           (b.usedNftGameAbilities?.find(a => a.nftGameAbilityId === "a1f33226-2b51-4b6e-bbfc-eb0a20f0de1c")?.count || 0) * 9 +
+                                           (b.usedNftGameAbilities?.find(a => a.nftGameAbilityId === "ac859dd7-3981-4a10-886b-7c0b03b7a498")?.count || 0) * 1;
+                            return bTotal - aTotal;
+                        });
                         break;
                     default:
                         sortedMembers = clanMembers;
@@ -311,6 +372,18 @@ document.addEventListener("DOMContentLoaded", async () => {
                     const diffTime = Math.abs(now - joinDate);
                     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
                     return diffDays <= days;
+                });
+                renderClanMembers(filteredMembers);
+            }
+
+            function filterByAbility(ability) {
+                if (!ability) {
+                    renderClanMembers(clanMembers);
+                    return;
+                }
+                const filteredMembers = clanMembers.filter(member => {
+                    const abilities = member.usedNftGameAbilities || [];
+                    return abilities.some(a => a.nftGameAbilityId === ability);
                 });
                 renderClanMembers(filteredMembers);
             }

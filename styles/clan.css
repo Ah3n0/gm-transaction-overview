@@ -1,0 +1,42 @@
+/* Clan Members */
+.clan-member {
+    cursor: pointer;
+    padding: 10px;
+    border-bottom: 1px solid #ddd;
+}
+
+.clan-member:last-child {
+    border-bottom: none;
+}
+
+.clan-member .details {
+    display: none;
+    padding-left: 20px;
+}
+
+.clan-member.open .details {
+    display: block;
+}
+
+.clan-owner strong {
+    color: #007bff;
+}
+
+.green {
+    color: green;
+}
+
+.purple {
+    color: purple;
+}
+
+.red {
+    color: red;
+}
+
+.total-sum {
+    margin-top: 20px;
+    font-size: 1.2rem;
+    font-weight: bold;
+    text-align: center;
+}

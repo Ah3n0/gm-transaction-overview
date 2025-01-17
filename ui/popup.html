@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Transaction Download</title>
     <link rel="stylesheet" href="../styles/styles.css">
+    <link rel="stylesheet" href="../styles/clan.css">
 </head>
 <body>
     <div>
@@ -66,6 +67,11 @@
                                     <option value="alphabetical">Alphabetical</option>
                                     <option value="joinDate">Join Date</option>
                                     <option value="power">Power</option>
+                                    <option value="ability1">Ability 1</option>
+                                    <option value="ability2">Ability 2</option>
+                                    <option value="ability3">Ability 3</option>
+                                    <option value="ability4">Ability 4</option>
+                                    <option value="total">Total</option>
                                 </select>
                                 <label for="filter-clan-members">Joined after:</label>
                                 <select id="filter-clan-members">
@@ -77,6 +83,7 @@
                                 </select>
                             </div>
                             <ul id="clan-list"><li>Loading...</li></ul>
+                            <div id="total-sum" class="total-sum"></div>
                         </div>
                         <div class="discount-info tab-panel">
                             <h3>Discount Info</h3>

@@ -1,4 +1,4 @@
-import { BASE_URL, MINER_UPGRADE_URL, MINER_BUY_URL, DISCOUNT_URL, MAINTENANCE_STATE_URL, USER_REWARDS_URL, CLAN_MEMBER_URL } from "../config.js";
+import { BASE_URL, MINER_UPGRADE_URL, MINER_BUY_URL, DISCOUNT_URL, MAINTENANCE_STATE_URL, USER_REWARDS_URL, CLAN_MEMBER_URL, MARKETPLACE_ORDER_URL } from "../config.js";
 
 async function fetchFromAPI(url, body, bearerToken) {
     const headers = {
@@ -86,4 +86,11 @@ export async function fetchClanMember(bearerToken) {
     }
 
     return { data: { usersForClient: allMembers } };
+}
+
+export async function fetchMarketplaceOrders(bearerToken) {
+    const body = {
+        pagination: { skip: 0, limit: 20 }
+    };
+    return fetchFromAPI(MARKETPLACE_ORDER_URL, body, bearerToken);
 }
