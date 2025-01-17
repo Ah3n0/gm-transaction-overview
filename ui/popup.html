@@ -14,7 +14,8 @@
                     <div class="tabs">
                         <div class="tab" data-target="container">Export</div>
                         <div class="tab" data-target="nft-info">NFT</div>
-                        <div class="tab" data-target="mw-info">Miner Wars</div>
+                        <div class="tab" data-target="rewards-info">Rewards</div>
+                        <div class="tab" data-target="clan-info">Clan Members</div>
                         <div class="tab" data-target="discount-info">Discount</div>
                     </div>
                     <div class="tab-content">
@@ -53,6 +54,14 @@
                                 <ul id="event-list"></ul>
                             </div>
                         </div> 
+                        <div class="rewards-info tab-panel">
+                            <h3>Personal Rewards</h3>
+                            <ul id="rewards-list"><li>Loading...</li></ul>
+                        </div>
+                        <div class="clan-info tab-panel">
+                            <h3>Clan Members (<span id="clan-member-count">0</span>)</h3>
+                            <ul id="clan-list"><li>Loading...</li></ul>
+                        </div>
                         <div class="discount-info tab-panel">
                             <h3>Discount Info</h3>
                             <div id="discount-list" class="discount-list"></div>
@@ -67,9 +76,6 @@
                             <p><strong>Total Maintenance:</strong> <span id="total-maintenance"></span> GMT</p>
                             <button id="update-button" disabled>Update Maintenance</button>
                         </div>                         
-                        <div class="mw-info tab-panel">
-                            <h3>Miner Wars</h3>
-                        </div>                        
                     </div>
                 </div>
             </div>

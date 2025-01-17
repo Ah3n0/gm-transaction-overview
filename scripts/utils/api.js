@@ -1,4 +1,4 @@
-import { BASE_URL, MINER_UPGRADE_URL, MINER_BUY_URL, DISCOUNT_URL, MAINTENANCE_STATE_URL } from "../config.js";
+import { BASE_URL, MINER_UPGRADE_URL, MINER_BUY_URL, DISCOUNT_URL, MAINTENANCE_STATE_URL, USER_REWARDS_URL, CLAN_MEMBER_URL } from "../config.js";
 
 async function fetchFromAPI(url, body, bearerToken) {
     const headers = {
@@ -59,4 +59,31 @@ export async function fetchDiscount(bearerToken) {
 export async function fetchMaintenanceState(bearerToken) {
     const body = {};
     return fetchFromAPI(MAINTENANCE_STATE_URL, body, bearerToken);
+}
+
+export async function fetchUserRewards(bearerToken) {
+    const body = {
+        filters: { type: "user" },
+        pagination: { skip: 0, limit: 40 }
+    };
+    return fetchFromAPI(USER_REWARDS_URL, body, bearerToken);
+}
+
+export async function fetchClanMember(bearerToken) {
+    let allMembers = [];
+    let skip = 0;
+    let hasMore = true;
+
+    while (hasMore) {
+        const body = {
+            pagination: { skip: skip, limit: 50 }
+        };
+        const response = await fetchFromAPI(CLAN_MEMBER_URL, body, bearerToken);
+        const members = response.data.usersForClient;
+        allMembers = allMembers.concat(members);
+        skip += 50;
+        hasMore = members.length === 50;
+    }
+
+    return { data: { usersForClient: allMembers } };
 }

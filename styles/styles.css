@@ -25,14 +25,14 @@ h2 {
     padding: 20px;
 }
 
-.container, .nft-info, .mw-info, .discount-info, .user-info {
+.container, .nft-info, .mw-info, .discount-info, .user-info, .rewards-info, .clan-info {
     background: #ffffff;
     border-radius: 12px;
     padding: 20px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-.container, .nft-info, .discount-info, .mw-info {
+.container, .nft-info, .discount-info, .mw-info, .rewards-info, .clan-info {
     width: 500px;
     flex: 2;
     margin: 0 auto;
@@ -410,4 +410,18 @@ button:disabled {
     background-color: #cccccc;
     color: #666666;
     cursor: not-allowed;
+}
+
+.rewards-info ul, .clan-info ul {
+    list-style: none;
+    padding: 0;
+}
+
+.rewards-info li, .clan-info li {
+    padding: 10px;
+    border-bottom: 1px solid #ddd;
+}
+
+.rewards-info li:last-child, .clan-info li:last-child {
+    border-bottom: none;
 }

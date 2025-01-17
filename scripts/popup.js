@@ -9,7 +9,7 @@ import {
 } from './config.js';
 
 import { writeToCSV } from './utils/file.js';
-import { fetchDiscount, fetchNFT, fetchMaintenanceState } from './utils/api.js';
+import { fetchDiscount, fetchNFT, fetchMaintenanceState, fetchUserRewards, fetchClanMember } from './utils/api.js';
 import { formatDate } from './utils/time.js';
 import { mapToKoinly, mapToBlockpit } from './utils/mappers.js';
 import { getBearerTokenFromCookie } from './utils/cookies.js';
@@ -220,6 +220,54 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
     } catch (error) {
         console.error('Error managing update button:', error);
+    }
+
+    // Fetch user rewards
+    try {
+        const bearerToken = await getBearerTokenFromCookie();
+        const rewardsData = await fetchUserRewards(bearerToken);
+        const rewards = rewardsData.data.array;
+
+        const rewardsList = document.getElementById('rewards-list');
+        rewardsList.innerHTML = '';
+        rewards.forEach(reward => {
+            const listItem = document.createElement('li');
+            listItem.innerHTML = `
+                <strong>Round ID:</strong> ${reward.roundId} <br>
+                <strong>Created At:</strong> ${reward.createdAt} <br>
+                <strong>GMT Value:</strong> ${reward.gmtValue} <br>
+                <strong>Multiplier:</strong> ${reward.multiplier}
+            `;
+            rewardsList.appendChild(listItem);
+        });
+    } catch (error) {
+        console.error('Error fetching user rewards:', error);
+        document.getElementById('rewards-list').innerHTML = '<li>Error loading rewards.</li>';
+    }
+
+    // Fetch clan members
+    try {
+        const bearerToken = await getBearerTokenFromCookie();
+        const clanData = await fetchClanMember(bearerToken);
+        const clanMembers = clanData.data.usersForClient;
+
+        const clanList = document.getElementById('clan-list');
+        const clanMemberCount = document.getElementById('clan-member-count');
+        clanList.innerHTML = '';
+        clanMemberCount.textContent = clanMembers.length;
+
+        clanMembers.forEach(member => {
+            const listItem = document.createElement('li');
+            listItem.innerHTML = `
+                <strong>Alias:</strong> ${member.alias} <br>
+                <strong>Power:</strong> ${member.power} <br>
+                <strong>Join Date:</strong> ${member.joinDate}
+            `;
+            clanList.appendChild(listItem);
+        });
+    } catch (error) {
+        console.error('Error fetching clan members:', error);
+        document.getElementById('clan-list').innerHTML = '<li>Error loading clan members.</li>';
     }
 
     // Event handler to clear the date picker
