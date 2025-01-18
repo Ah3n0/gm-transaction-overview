@@ -1,5 +1,5 @@
 import { BASE_URL } from "../config.js";
-import { fetchData, fetchUpgradesNFT } from './api.js';
+import { fetchData, fetchUpgradesNFT, pushService, fetchMaintenanceState } from './api.js';
 
 export function updateStatusLabel(statusLabel, message, isError) {
     statusLabel.textContent = message;
@@ -75,30 +75,21 @@ export async function displayMinerEvents(minerId, bearerToken) {
 
 export async function handleButtonActivation(button, bearerToken) {
     if (button) {
-        button.disabled = false;
-        button.textContent = 'Update Maintenance';
-        console.log('Update button activated.');
-
         try {
             const serviceResponse = await pushService(bearerToken);
             const { updateAvailableFrom: newUpdateTime } = serviceResponse.data;
 
             if (newUpdateTime) {
-                const formattedNewTime = new Date(newUpdateTime).toISOString().replace('T', ' ').slice(0, 19);
-                console.log(`New update time received: ${formattedNewTime}`);
+                const updateTime = new Date(newUpdateTime).getTime();
+                const now = new Date().getTime();
+                const delay = updateTime - now;
 
-                button.disabled = true;
-                button.textContent = `Enable at ${formattedNewTime}`;
-
-                const newUpdateDelay = new Date(newUpdateTime).getTime() - new Date().getTime();
-                if (newUpdateDelay > 0) {
-                    setTimeout(async () => {
-                        await handleButtonActivation(button, bearerToken);
-                    }, newUpdateDelay);
+                if (delay > 0) {
+                    startCountdown(button, delay, bearerToken);
                 } else {
-                    console.log('New update time has already passed. Keeping button enabled for manual action.');
                     button.disabled = false;
                     button.textContent = 'Update Maintenance';
+                    console.log('Update button activated.');
                 }
             }
         } catch (error) {
@@ -107,4 +98,45 @@ export async function handleButtonActivation(button, bearerToken) {
             button.textContent = 'Retry Update';
         }
     }
+}
+
+function startCountdown(button, delay, bearerToken) {
+    let remainingTime = delay;
+
+    const interval = setInterval(() => {
+        if (remainingTime <= 0) {
+            clearInterval(interval);
+            button.disabled = false;
+            button.textContent = 'Update Maintenance';
+            handleButtonActivation(button, bearerToken);
+        } else {
+            button.disabled = true;
+            button.textContent = `Enable in ${Math.ceil(remainingTime / 1000)}s`;
+            remainingTime -= 1000;
+        }
+    }, 1000);
+
+    setTimeout(async () => {
+        await handleButtonActivation(button, bearerToken);
+    }, delay);
+
+    // Check maintenance state periodically
+    setInterval(async () => {
+        try {
+            const maintenanceState = await fetchMaintenanceState(bearerToken);
+            const { updateAvailableFrom } = maintenanceState.data;
+            const newUpdateTime = new Date(updateAvailableFrom).getTime();
+            const now = new Date().getTime();
+            const newDelay = newUpdateTime - now;
+
+            if (newDelay <= 0) {
+                clearInterval(interval);
+                button.disabled = false;
+                button.textContent = 'Update Maintenance';
+                handleButtonActivation(button, bearerToken);
+            }
+        } catch (error) {
+            console.error('Error checking maintenance state:', error);
+        }
+    }, 60000); // Check every minute
 }

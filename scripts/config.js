@@ -8,6 +8,7 @@ export const MAINTENANCE_STATE_URL = "https://api.gomining.com/api/action/get-ma
 export const USER_REWARDS_URL = "https://api.gomining.com/api/nft-game/rewards-by-user";
 export const CLAN_MEMBER_URL = "https://api.gomining.com/api/nft-game/clan/get-my-with-users";
 export const MARKETPLACE_ORDER_URL = "https://api.gomining.com/api/nft-marketplace-order/find-by-user";
+export const PUSH_SERVICE_URL = "https://api.gomining.com/api/action/push";
 export const OUTPUT_CSV_FILE = "output.csv";
 export const KOINLY_CSV_FILE = "koinly_formatted.csv";
 export const BLOCKPIT_CSV_FILE = "blockpit_formatted.csv";

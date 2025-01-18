@@ -400,18 +400,6 @@ document.addEventListener("DOMContentLoaded", async () => {
                 renderClanMembers(filteredMembers);
             }
 
-            function filterByAbility(ability) {
-                if (!ability) {
-                    renderClanMembers(clanMembers);
-                    return;
-                }
-                const filteredMembers = clanMembers.filter(member => {
-                    const abilities = member.usedNftGameAbilities || [];
-                    return abilities.some(a => a.nftGameAbilityId === ability);
-                });
-                renderClanMembers(filteredMembers);
-            }
-
             sortSelect.addEventListener('change', (event) => {
                 sortClanMembers(event.target.value);
             });
