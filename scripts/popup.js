@@ -264,7 +264,8 @@ document.addEventListener("DOMContentLoaded", async () => {
                 <strong>Round ID:</strong> ${reward.roundId} <br>
                 <strong>Created At (UTC):</strong> ${utcCreatedAt} <br>
                 <strong>GMT Value:</strong> ${reward.gmtValue} <br>
-                <strong>Multiplier:</strong> ${reward.multiplier}
+                <strong>Multiplier:</strong> ${reward.multiplier} <br>
+                <strong>Cycle:</strong> ${reward.cycleId}
             `;
             rewardsList.appendChild(listItem);
         });
