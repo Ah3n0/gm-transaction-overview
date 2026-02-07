@@ -1,5 +1,16 @@
 # Changelog
 
+## Version 0.7.2
+### Added
+- NFT: Toggle (default off) to show sold NFTs.
+- Pool Rewards: new tab (last 12 months) with net calculation and GMT totals.
+- User: moved user info into its own tab.
+
+### Improved
+- Marketplace: $/TH now based on `priceUsdt / power` (matches detail view).
+- Marketplace: show energy efficiency (W/TH).
+- Marketplace: Top-N dropdown (5/10/20/50/100) and auto-reload; removed Reload button.
+
 ## Version 0.7.1
 ### Removed
 - Export/Transaction-Download: CSV/Koinly/Blockpit Export vollständig entfernt (inkl. ungenutztem Code und Tests).

@@ -15,13 +15,21 @@
                     <div class="tabs">
                         <div class="tab active" data-target="nft-info">NFT</div>
                         <div class="tab" data-target="rewards-info">Rewards</div>
+                        <div class="tab" data-target="pool-rewards-info">Pool Rewards</div>
                         <div class="tab" data-target="clan-info">Clan Members</div>
                         <div class="tab" data-target="discount-info">Discount</div>
                         <div class="tab" data-target="marketplace-info">Marketplace</div>
+                        <div class="tab" data-target="user-tab-info">User</div>
                     </div>
                     <div class="tab-content">
                         <div class="nft-info tab-panel active">
                             <h3>Miner Overview</h3>
+                            <div class="toolbar toolbar-left">
+                                <label class="inline-toggle">
+                                    <input id="showSoldNftsToggle" type="checkbox" />
+                                    Show sold NFTs
+                                </label>
+                            </div>
                             <div id="miner-list" class="miner-list"></div>
                             <div id="miner-events" class="miner-events">
                                 <h4>Miner Events</h4>
@@ -32,6 +40,17 @@
                             <h3>Personal Rewards</h3>
                             <ul id="rewards-list"><li>Loading...</li></ul>
                         </div>
+
+                        <div class="pool-rewards-info tab-panel">
+                            <h3>Pool Rewards (net of PR+Electricity)</h3>
+                            <div class="toolbar">
+                                <button id="poolRewardsReloadBtn" class="button">Reload</button>
+                            </div>
+                            <div id="poolRewardsList">
+                                <p>Open this tab to load data.</p>
+                            </div>
+                        </div>
+
                         <div class="clan-info tab-panel">
                             <h3>Clan Members (<span id="clan-member-count">0</span>)</h3>
                             <div class="dropdown-container">
@@ -76,28 +95,34 @@
                         <div class="marketplace-info tab-panel">
                             <h3>Marketplace (Cheapest $/TH)</h3>
                             <div class="toolbar">
-                                <button id="marketplaceReloadBtn" class="button">Reload</button>
+                                <label class="toolbar-field">
+                                    Top
+                                    <select id="marketplaceTopN" class="toolbar-select">
+                                        <option value="5">5</option>
+                                        <option value="10">10</option>
+                                        <option value="20" selected>20</option>
+                                        <option value="50">50</option>
+                                        <option value="100">100</option>
+                                    </select>
+                                </label>
                             </div>
                             <div id="marketplaceList">
                                 <p>Loading...</p>
                             </div>
                         </div>
+
+                        <div class="user-tab-info tab-panel">
+                            <h3>User</h3>
+                            <div class="user-tab-grid">
+                                <p><strong>Alias:</strong><br><span id="alias"></span></p>
+                                <p><strong>ID:</strong><br><span id="user-id"></span></p>
+                                <p><strong>Email:</strong><br><span id="email"></span></p>
+                                <p><strong>Joined:</strong><br><span id="createdAt"></span></p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-            
-            <div class="user-info">
-                <div class="user-info-content">
-                    <p><strong>Alias:</strong> <br> <span id="alias"></span></p>
-                    <p><strong>ID:</strong> <br> <span id="user-id"></span></p>
-                    <p><strong>Email:</strong> <br> <span id="email"></span></p>
-                    <p><strong>Joined:</strong> <br> <span id="createdAt"></span></p>
-                </div>
-                <div class="toggle-container">
-                    <span class="toggle-icon">&lt;</span>
-                </div>
-            </div>
-
             <div id="version-info"></div>
         </div>
     </div>

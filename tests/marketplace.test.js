@@ -92,6 +92,38 @@ import { fetchCheapestMarketplaceMiners, mapMarketplaceOrderToDeal } from "../sc
             assert.strictEqual(deal.imageUrl, "https://cdn.example.com/miner.png", "Should map imageUrl");
         }
 
+        // Test 4: Generic `price` is treated as GMT (not USD).
+        {
+            const deal = mapMarketplaceOrderToDeal({
+                name: "Miner GMT",
+                power: 100,
+                price: 1200,
+            });
+
+            assert.ok(deal, "Deal should map");
+            assert.strictEqual(deal.priceUsdt, null, "Should not infer USDT price from generic price");
+            assert.strictEqual(deal.priceUsd, null, "Should not treat generic price as USD");
+            assert.strictEqual(deal.priceGmt, 1200, "Should map generic price to GMT");
+            assert.ok(Math.abs(deal.gmtPerTh - 12) < 1e-9, "Should compute gmtPerTh");
+        }
+
+        // Test 5: `priceUsdt` is preferred for $/TH.
+        {
+            const deal = mapMarketplaceOrderToDeal({
+                name: "Miner USDT",
+                power: 100,
+                price: 1200, // GMT
+                priceUsdt: 600,
+                energyEfficiency: 22,
+            });
+
+            assert.ok(deal, "Deal should map");
+            assert.strictEqual(deal.priceUsdt, 600, "Should map priceUsdt");
+            assert.strictEqual(deal.priceUsd, 600, "Should treat priceUsdt as primary USD-like price");
+            assert.ok(Math.abs(deal.usdPerTh - 6) < 1e-9, "Should compute usdPerTh from priceUsdt");
+            assert.strictEqual(deal.energyEfficiencyWPerTh, 22, "Should map energyEfficiency (W/TH)");
+        }
+
         console.log("All tests passed successfully.");
     } catch (error) {
         console.error(`Test failed: ${error.message}\n`);

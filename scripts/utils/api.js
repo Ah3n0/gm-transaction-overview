@@ -1,4 +1,75 @@
-import { MINER_UPGRADE_URL, MINER_BUY_URL, DISCOUNT_URL, MAINTENANCE_STATE_URL, USER_REWARDS_URL, CLAN_MEMBER_URL, CLAN_MY_URL, CLAN_BY_ID_URL, MARKETPLACE_ORDER_URL, MARKETPLACE_ORDER_INDEX_URL, MARKETPLACE_ORDER_INDEX_APP_URL, NFT_MARKETPLACE_INDEX_URL, NFT_MARKETPLACE_INDEX_APP_URL, PUSH_SERVICE_URL } from "../config.js";
+import { MINER_UPGRADE_URL, MINER_BUY_URL, DISCOUNT_URL, MAINTENANCE_STATE_URL, USER_REWARDS_URL, NFT_GAME_INCOME_URL, NFT_GAME_INCOME_APP_URL, CLAN_MEMBER_URL, CLAN_MY_URL, CLAN_BY_ID_URL, MARKETPLACE_ORDER_URL, MARKETPLACE_ORDER_INDEX_URL, MARKETPLACE_ORDER_INDEX_APP_URL, NFT_MARKETPLACE_INDEX_URL, NFT_MARKETPLACE_INDEX_APP_URL, PUSH_SERVICE_URL } from "../config.js";
+
+function toFiniteNumber(value) {
+    if (typeof value === "number") return Number.isFinite(value) ? value : null;
+    if (typeof value === "string") {
+        const trimmed = value.trim();
+        if (!trimmed) return null;
+        const parsed = Number(trimmed);
+        return Number.isFinite(parsed) ? parsed : null;
+    }
+    return null;
+}
+
+function toDateString(value) {
+    if (!value) return null;
+    const date = value instanceof Date ? value : new Date(value);
+    if (Number.isNaN(date.getTime())) return null;
+    return date.toISOString();
+}
+
+export function mapPoolRewardIncomeEntry(entry) {
+    // New API: find-aggregated-by-date
+    // Interest: totalReward (BTC) + gmtPrice (USD/GMT)
+    const createdAt = toDateString(entry?.createdAt) ?? null;
+
+    const totalRewardBtc = toFiniteNumber(entry?.totalReward);
+    const c1ValueBtc = toFiniteNumber(entry?.c1Value);
+    const c2ValueBtc = toFiniteNumber(entry?.c2Value);
+    const c1ValueInGmt = toFiniteNumber(entry?.c1ValueInGmt);
+    const c2ValueInGmt = toFiniteNumber(entry?.c2ValueInGmt);
+
+    const btcCourseInUsd = toFiniteNumber(entry?.incomeStatistic?.btcCourseInUsd);
+    const gmtPrice = toFiniteNumber(entry?.incomeStatistic?.gmtPrice);
+
+    const totalRewardGmt =
+        totalRewardBtc === null || btcCourseInUsd === null || gmtPrice === null || gmtPrice === 0
+            ? null
+            : (totalRewardBtc * btcCourseInUsd) / gmtPrice;
+
+    // Costs (PR + Electricity) appear as c1/c2 values.
+    // Prefer server-provided GMT values (c1ValueInGmt/c2ValueInGmt) if present; otherwise convert BTC costs to GMT.
+    const costsBtc = c1ValueBtc === null || c2ValueBtc === null ? null : c1ValueBtc + c2ValueBtc;
+
+    const costsGmtFromApi = c1ValueInGmt === null || c2ValueInGmt === null ? null : c1ValueInGmt + c2ValueInGmt;
+
+    const costsGmtFromBtc =
+        costsGmtFromApi === null && costsBtc !== null && btcCourseInUsd !== null && gmtPrice !== null && gmtPrice !== 0
+            ? (costsBtc * btcCourseInUsd) / gmtPrice
+            : null;
+
+    const costsGmt = costsGmtFromApi ?? costsGmtFromBtc;
+
+    const netBtc = totalRewardBtc === null || costsBtc === null ? null : totalRewardBtc - costsBtc;
+    const netGmt = totalRewardGmt === null || costsGmt === null ? null : totalRewardGmt - costsGmt;
+
+    return {
+        createdAt,
+        totalRewardBtc,
+        c1ValueBtc,
+        c2ValueBtc,
+        c1ValueInGmt,
+        c2ValueInGmt,
+        costsBtc,
+        costsGmt,
+        gmtPrice,
+        btcCourseInUsd,
+        totalRewardGmt,
+        netBtc,
+        netGmt,
+        toWalletType: entry?.toWalletType ?? null,
+    };
+}
 
 function createApiError({ url, status, statusText, responseText }) {
     const suffix = responseText ? `: ${responseText}` : "";
@@ -175,6 +246,21 @@ export async function fetchUserRewards(bearerToken) {
         pagination: { skip: 0, limit: 40 }
     };
     return fetchFromAPI(USER_REWARDS_URL, body, bearerToken);
+}
+
+export async function fetchNftGameIncome(bearerToken, options = {}) {
+    const { startDate, endDate, limit = 20, skip = 0 } = options;
+    const body = { startDate, endDate, limit, skip };
+
+    // Primary endpoint on api.gomining.com. Fallback to app.gomining.com if it returns 404.
+    try {
+        return await fetchFromAPI(NFT_GAME_INCOME_URL, body, bearerToken);
+    } catch (error) {
+        if (error?.status === 404) {
+            return await fetchFromAPI(NFT_GAME_INCOME_APP_URL, body, bearerToken);
+        }
+        throw error;
+    }
 }
 
 export async function fetchClanMember(bearerToken) {
@@ -464,13 +550,39 @@ export function mapMarketplaceOrderToDeal(order) {
         "hashRateTh",
     ]);
 
-    const priceUsd = pickFirstNumber(order, [
+    const energyEfficiencyWPerTh = pickFirstNumber(order, [
+        "nft.energyEfficiency",
+        "nft.energyEfficiencyWPerTh",
+        "energyEfficiency",
+        "energyEfficiencyWPerTh",
+    ]);
+
+    // The web app often shows a USDT-based price (e.g. `priceUsdt`).
+    // Prefer that for the "$ / TH" metric to match the UI users see.
+    const priceUsdt = pickFirstNumber(order, [
+        "priceUsdt",
+        "priceInUsdt",
+        "usdtPrice",
+        "price.usdt",
+        "priceInUSDT",
+    ]);
+
+    // Fallback USD sources (not always present).
+    const priceUsdRaw = pickFirstNumber(order, [
         "priceUsd",
         "priceInUsd",
         "usdPrice",
         "price.usd",
-        "price.value",
+    ]);
+
+    const priceGmt = pickFirstNumber(order, [
+        "priceGmt",
+        "priceInGmt",
+        "gmtPrice",
+        "price.gmt",
+        // Common when the API is filtered to GMT: `price` is the GMT amount.
         "price",
+        "price.value",
     ]);
 
     // Some APIs store power in H/s (or GH/s). If power looks unrealistically large, treat it as H/s and convert to TH.
@@ -479,11 +591,17 @@ export function mapMarketplaceOrderToDeal(order) {
         normalizedPowerTh = normalizedPowerTh / 1e12;
     }
 
-    if (normalizedPowerTh === null || normalizedPowerTh <= 0 || priceUsd === null || priceUsd <= 0) {
+    if (normalizedPowerTh === null || normalizedPowerTh <= 0) {
         return null;
     }
 
-    const usdPerTh = priceUsd / normalizedPowerTh;
+    const priceUsd = priceUsdt ?? priceUsdRaw;
+    const usdPerTh = priceUsd === null || priceUsd <= 0 ? null : priceUsd / normalizedPowerTh;
+    const gmtPerTh = priceGmt === null || priceGmt <= 0 ? null : priceGmt / normalizedPowerTh;
+
+    if (usdPerTh === null && gmtPerTh === null) {
+        return null;
+    }
 
     const imageUrl = pickFirstString(order, [
         "nft.smallImageUrl",
@@ -566,7 +684,12 @@ export function mapMarketplaceOrderToDeal(order) {
         name,
         powerTh: normalizedPowerTh,
         priceUsd,
+        priceUsdt,
+        priceGmt,
         usdPerTh,
+        gmtPerTh,
+        currency: usdPerTh !== null ? "USDT" : (gmtPerTh !== null ? "GMT" : "USD"),
+        energyEfficiencyWPerTh,
         marketplaceUrl: urlWithMarketplace,
         imageUrl,
         nftKeyOrId,
@@ -660,7 +783,7 @@ export async function fetchCheapestMarketplaceMiners(bearerToken, options = {}) 
         if (items.length < limit) break;
     }
 
-    deals.sort((a, b) => a.usdPerTh - b.usdPerTh);
+    deals.sort((a, b) => (a.usdPerTh ?? a.gmtPerTh) - (b.usdPerTh ?? b.gmtPerTh));
     return deals.slice(0, targetTop);
 }
 
@@ -674,7 +797,7 @@ export function rankMarketplaceDealsFromOrders(orders, options = {}) {
         if (deal) deals.push(deal);
     }
 
-    deals.sort((a, b) => a.usdPerTh - b.usdPerTh);
+    deals.sort((a, b) => (a.usdPerTh ?? a.gmtPerTh) - (b.usdPerTh ?? b.gmtPerTh));
     return deals.slice(0, targetTop);
 }
 

@@ -2,7 +2,7 @@ import {
     AUTH_URL, 
 } from './config.js';
 
-import { fetchDiscount, fetchNFT, fetchMaintenanceState, fetchUserRewards, fetchClanMember, fetchMarketplaceOrders, fetchCheapestMarketplaceMiners, rankMarketplaceDealsFromOrders } from './utils/api.js';
+import { fetchDiscount, fetchNFT, fetchMaintenanceState, fetchUserRewards, fetchNftGameIncome, mapPoolRewardIncomeEntry, fetchClanMember, fetchMarketplaceOrders, fetchCheapestMarketplaceMiners, rankMarketplaceDealsFromOrders } from './utils/api.js';
 import { formatDate } from './utils/time.js';
 import { getBearerTokenFromCookie } from './utils/cookies.js';
 import { displayMinerEvents, handleButtonActivation } from './utils/ui.js';
@@ -34,6 +34,139 @@ function formatUsdPerTh(value) {
     return `$${number.toFixed(4)} / TH`;
 }
 
+function formatGmtPerTh(value) {
+    const number = typeof value === "number" ? value : Number(value);
+    if (!Number.isFinite(number)) return "-";
+    return `${number.toFixed(4)} GMT / TH`;
+}
+
+function formatGmt(value) {
+    const number = typeof value === "number" ? value : Number(value);
+    if (!Number.isFinite(number)) return "-";
+    return `${number.toFixed(6)} GMT`;
+}
+
+function formatBtc(value) {
+    const number = typeof value === "number" ? value : Number(value);
+    if (!Number.isFinite(number)) return "-";
+    return `${number.toFixed(8)} BTC`;
+}
+
+function formatUtc(value) {
+    const date = value instanceof Date ? value : new Date(value);
+    if (Number.isNaN(date.getTime())) return "-";
+    return date.toUTCString();
+}
+
+function formatWPerTh(value) {
+    const number = typeof value === "number" ? value : Number(value);
+    if (!Number.isFinite(number)) return "-";
+    return `${number.toFixed(0)} W/TH`;
+}
+
+function readMarketplaceTopN() {
+    const input = document.getElementById('marketplaceTopN');
+    const raw = input?.value;
+    const parsed = raw === undefined || raw === null || raw === '' ? NaN : Number(raw);
+    const allowed = [5, 10, 20, 50, 100];
+    if (!Number.isFinite(parsed)) return 20;
+    const value = Math.trunc(parsed);
+    return allowed.includes(value) ? value : 20;
+}
+
+async function loadPoolRewards() {
+    const listEl = document.getElementById('poolRewardsList');
+    if (!listEl) return;
+
+    listEl.innerHTML = '<p>Loading...</p>';
+
+    try {
+        const bearerToken = await getBearerTokenFromCookie();
+
+        const endDate = new Date();
+        const startDate = new Date(endDate);
+        startDate.setMonth(startDate.getMonth() - 12);
+
+        const result = await fetchNftGameIncome(bearerToken, {
+            startDate: startDate.toISOString(),
+            endDate: endDate.toISOString(),
+            limit: 20,
+            skip: 0,
+        });
+
+        const items =
+            result?.data?.array ??
+            result?.data?.items ??
+            result?.data?.list ??
+            result?.data ??
+            [];
+
+        if (!Array.isArray(items) || items.length === 0) {
+            listEl.innerHTML = '<p>No pool rewards found.</p>';
+            return;
+        }
+
+        const mappedItems = items.map((entry) => mapPoolRewardIncomeEntry(entry));
+
+        const rows = mappedItems
+            .map((mapped) => {
+                const createdAt = mapped?.createdAt ? formatUtc(mapped.createdAt) : '-';
+                const totalRewardBtc = mapped?.totalRewardBtc;
+                const totalRewardGmt = mapped?.totalRewardGmt;
+                const costsGmt = mapped?.costsGmt;
+                const netGmt = mapped?.netGmt;
+                const walletType = mapped?.toWalletType ?? '-';
+
+                return `
+                    <div class="pool-rewards-row">
+                        <div class="pool-rewards-col pool-rewards-date">${escapeHtml(createdAt)}</div>
+                        <div class="pool-rewards-col">${escapeHtml(formatBtc(totalRewardBtc))}</div>
+                        <div class="pool-rewards-col">${escapeHtml(formatGmt(totalRewardGmt))}</div>
+                        <div class="pool-rewards-col">${escapeHtml(formatGmt(costsGmt))}</div>
+                        <div class="pool-rewards-col pool-rewards-net">${escapeHtml(formatGmt(netGmt))}</div>
+                        <div class="pool-rewards-col pool-rewards-wallet">${escapeHtml(walletType)}</div>
+                    </div>
+                `;
+            })
+            .join('');
+
+        const totals = mappedItems.reduce(
+            (acc, m) => {
+                if (typeof m?.totalRewardBtc === 'number' && Number.isFinite(m.totalRewardBtc)) acc.totalRewardBtc += m.totalRewardBtc;
+                if (typeof m?.totalRewardGmt === 'number' && Number.isFinite(m.totalRewardGmt)) acc.totalRewardGmt += m.totalRewardGmt;
+                if (typeof m?.costsGmt === 'number' && Number.isFinite(m.costsGmt)) acc.costsGmt += m.costsGmt;
+                if (typeof m?.netGmt === 'number' && Number.isFinite(m.netGmt)) acc.netGmt += m.netGmt;
+                return acc;
+            },
+            { totalRewardBtc: 0, totalRewardGmt: 0, costsGmt: 0, netGmt: 0 }
+        );
+
+        listEl.innerHTML = `
+            <div class="pool-rewards-summary">
+                <div><strong>Total Reward:</strong> ${escapeHtml(formatBtc(totals.totalRewardBtc))}</div>
+                <div><strong>Total Reward (GMT):</strong> ${escapeHtml(formatGmt(totals.totalRewardGmt))}</div>
+                <div><strong>Total Costs (PR + Electricity) (GMT):</strong> ${escapeHtml(formatGmt(totals.costsGmt))}</div>
+                <div><strong>Total Net (GMT):</strong> ${escapeHtml(formatGmt(totals.netGmt))}</div>
+            </div>
+            <div class="pool-rewards-table">
+                <div class="pool-rewards-row pool-rewards-header">
+                    <div class="pool-rewards-col pool-rewards-date">Date (UTC)</div>
+                    <div class="pool-rewards-col">Reward (BTC)</div>
+                    <div class="pool-rewards-col">Reward (GMT)</div>
+                    <div class="pool-rewards-col">PR+Electricity (c1+c2) (GMT)</div>
+                    <div class="pool-rewards-col pool-rewards-net">Net (GMT)</div>
+                    <div class="pool-rewards-col pool-rewards-wallet">Wallet</div>
+                </div>
+                ${rows}
+            </div>
+        `;
+    } catch (error) {
+        console.error('Error loading pool rewards:', error);
+        const message = error?.message ? escapeHtml(error.message) : 'Unknown error';
+        listEl.innerHTML = `<p>Error loading pool rewards: ${message}</p>`;
+    }
+}
+
 async function loadMarketplaceCheapest() {
     const listEl = document.getElementById('marketplaceList');
     if (!listEl) return;
@@ -42,7 +175,9 @@ async function loadMarketplaceCheapest() {
 
     try {
         const bearerToken = await getBearerTokenFromCookie();
-        const deals = await fetchCheapestMarketplaceMiners(bearerToken, { top: 10, scanLimit: 300, pageSize: 50 });
+        const top = readMarketplaceTopN();
+        const scanLimit = Math.max(300, top * 30);
+        const deals = await fetchCheapestMarketplaceMiners(bearerToken, { top, scanLimit, pageSize: 50 });
 
         if (!Array.isArray(deals) || deals.length === 0) {
             listEl.innerHTML = '<p>No marketplace deals found (or missing fields).</p>';
@@ -55,6 +190,18 @@ async function loadMarketplaceCheapest() {
                 const url = deal?.marketplaceUrl ?? 'https://app.gomining.com/marketplace';
                 const imageUrl = deal?.imageUrl;
 
+                const pricePart = typeof deal?.priceUsd === 'number'
+                    ? formatMoneyUsd(deal.priceUsd)
+                    : (typeof deal?.priceGmt === 'number' ? formatGmt(deal.priceGmt) : '-');
+
+                const efficiencyPart = typeof deal?.energyEfficiencyWPerTh === 'number'
+                    ? formatWPerTh(deal.energyEfficiencyWPerTh)
+                    : '-';
+
+                const perThPart = typeof deal?.usdPerTh === 'number'
+                    ? formatUsdPerTh(deal.usdPerTh)
+                    : (typeof deal?.gmtPerTh === 'number' ? formatGmtPerTh(deal.gmtPerTh) : '-');
+
                 return `
                     <div class="marketplace-row">
                         <div class="marketplace-rank">#${idx + 1}</div>
@@ -64,11 +211,13 @@ async function loadMarketplaceCheapest() {
                         <div class="marketplace-main">
                             <div class="marketplace-name"><a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(name)}</a></div>
                             <div class="marketplace-meta">
-                                <span>${formatMoneyUsd(deal?.priceUsd)}</span>
+                                <span>${escapeHtml(pricePart)}</span>
                                 <span>•</span>
                                 <span>${formatTh(deal?.powerTh)}</span>
                                 <span>•</span>
-                                <span><strong>${formatUsdPerTh(deal?.usdPerTh)}</strong></span>
+                                <span>${escapeHtml(efficiencyPart)}</span>
+                                <span>•</span>
+                                <span><strong>${escapeHtml(perThPart)}</strong></span>
                             </div>
                         </div>
                     </div>
@@ -82,13 +231,26 @@ async function loadMarketplaceCheapest() {
             try {
                 listEl.innerHTML = '<p>Blocked (403). Retrying via app.gomining.com tab...</p>';
                 const bearerToken = await getBearerTokenFromCookie();
-                const deals = await loadMarketplaceCheapestViaTab(bearerToken);
+                const top = readMarketplaceTopN();
+                const deals = await loadMarketplaceCheapestViaTab(bearerToken, { top });
                 if (Array.isArray(deals) && deals.length > 0) {
                     const rows = deals
                         .map((deal, idx) => {
                             const name = deal?.name ?? 'Unknown Miner';
                             const url = deal?.marketplaceUrl ?? 'https://app.gomining.com/marketplace';
                             const imageUrl = deal?.imageUrl;
+
+                            const pricePart = typeof deal?.priceUsd === 'number'
+                                ? formatMoneyUsd(deal.priceUsd)
+                                : (typeof deal?.priceGmt === 'number' ? formatGmt(deal.priceGmt) : '-');
+
+                            const efficiencyPart = typeof deal?.energyEfficiencyWPerTh === 'number'
+                                ? formatWPerTh(deal.energyEfficiencyWPerTh)
+                                : '-';
+
+                            const perThPart = typeof deal?.usdPerTh === 'number'
+                                ? formatUsdPerTh(deal.usdPerTh)
+                                : (typeof deal?.gmtPerTh === 'number' ? formatGmtPerTh(deal.gmtPerTh) : '-');
 
                             return `
                                 <div class="marketplace-row">
@@ -99,11 +261,13 @@ async function loadMarketplaceCheapest() {
                                     <div class="marketplace-main">
                                         <div class="marketplace-name"><a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(name)}</a></div>
                                         <div class="marketplace-meta">
-                                            <span>${formatMoneyUsd(deal?.priceUsd)}</span>
+                                            <span>${escapeHtml(pricePart)}</span>
                                             <span>•</span>
                                             <span>${formatTh(deal?.powerTh)}</span>
                                             <span>•</span>
-                                            <span><strong>${formatUsdPerTh(deal?.usdPerTh)}</strong></span>
+                                            <span>${escapeHtml(efficiencyPart)}</span>
+                                            <span>•</span>
+                                            <span><strong>${escapeHtml(perThPart)}</strong></span>
                                         </div>
                                     </div>
                                 </div>
@@ -145,9 +309,10 @@ async function loadMarketplaceCheapest() {
     }
 }
 
-async function loadMarketplaceCheapestViaTab(bearerToken) {
+async function loadMarketplaceCheapestViaTab(bearerToken, options = {}) {
+    const { top = 10 } = options;
     const pageSize = 50;
-    const scanLimit = 300;
+    const scanLimit = Math.max(300, Number(top) * 30);
 
     const allOrders = [];
     for (let skip = 0; skip < scanLimit; skip += pageSize) {
@@ -201,7 +366,7 @@ async function loadMarketplaceCheapestViaTab(bearerToken) {
         if (items.length < pageSize) break;
     }
 
-    return rankMarketplaceDealsFromOrders(allOrders, { top: 10 });
+    return rankMarketplaceDealsFromOrders(allOrders, { top });
 }
 
 // Event listener for DOM content loaded
@@ -209,6 +374,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const createdAtElement = document.getElementById("createdAt");
     const manifest = chrome.runtime.getManifest();
     const minerList = document.getElementById('miner-list');
+    const showSoldNftsToggle = document.getElementById('showSoldNftsToggle');
     const discountList = document.getElementById('discount-list');
     minerList.innerHTML = '<p>Loading...</p>';
     discountList.innerHTML = '<p>Loading...</p>';
@@ -244,20 +410,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         document.getElementById("alias").textContent = "Error";
     }
 
-    // Toggle user-info section
-    const userInfo = document.querySelector('.user-info');
-    const toggleIcon = userInfo.querySelector('.toggle-icon');
-
-    userInfo.querySelector('.toggle-container').addEventListener('click', () => {
-        userInfo.classList.toggle('collapsed');
-        toggleIcon.textContent = userInfo.classList.contains('collapsed') ? '>' : '<';
-
-        // Adjust the width of other containers
-        document.querySelectorAll('.nft-info, .discount-info, .rewards-info, .clan-info, .marketplace-info').forEach(container => {
-            container.style.width = userInfo.classList.contains('collapsed') ? '600px' : '500px';
-        });
-    });
-
     // Fetch all miners
     try {
         const bearerToken = await getBearerTokenFromCookie();
@@ -270,35 +422,55 @@ document.addEventListener("DOMContentLoaded", async () => {
             .filter(order => order.status === "success")
             .map(order => order.nftId);
 
-        minerList.innerHTML = '';
-        miners.forEach(miner => {
-            const minerData = miner.nfts[0];
-            if (!minerData) {
-                console.warn('Miner without NFT data:', miner);
-                return;
-            }
+        const renderMiners = ({ showSold }) => {
+            minerList.innerHTML = '';
 
-            const isSold = soldNftIds.includes(minerData.id);
+            let renderedCount = 0;
+            miners.forEach(miner => {
+                const minerData = miner.nfts[0];
+                if (!minerData) {
+                    console.warn('Miner without NFT data:', miner);
+                    return;
+                }
 
-            const card = document.createElement('div');
-            card.className = `miner-card ${isSold ? 'sold' : ''}`;
+                const isSold = soldNftIds.includes(minerData.id);
+                if (isSold && !showSold) return;
 
-            card.innerHTML = `
-                <div class="image-container">
-                    <img src="${minerData.smallImageUrl}" alt="${minerData.name}">
-                    ${isSold ? '<div class="sold-stamp">Sold</div>' : ''}
-                </div>
-                <h4>${minerData.name}</h4>
-                <p>Value: ${miner.value || 0} GMT</p>
-            `;
+                const card = document.createElement('div');
+                card.className = `miner-card ${isSold ? 'sold' : ''}`;
 
-            // Click event for miner cards
-            card.addEventListener('click', () => {
-                displayMinerEvents(minerData.id, bearerToken);
+                card.innerHTML = `
+                    <div class="image-container">
+                        <img src="${minerData.smallImageUrl}" alt="${minerData.name}">
+                        ${isSold ? '<div class="sold-stamp">Sold</div>' : ''}
+                    </div>
+                    <h4>${minerData.name}</h4>
+                    <p>Value: ${miner.value || 0} GMT</p>
+                `;
+
+                // Click event for miner cards
+                card.addEventListener('click', () => {
+                    displayMinerEvents(minerData.id, bearerToken);
+                });
+
+                minerList.appendChild(card);
+                renderedCount += 1;
             });
 
-            minerList.appendChild(card);
-        });
+            if (renderedCount === 0) {
+                minerList.innerHTML = '<p>No miners to display.</p>';
+            }
+        };
+
+        // Default: hide sold NFTs
+        if (showSoldNftsToggle) {
+            showSoldNftsToggle.checked = false;
+            showSoldNftsToggle.addEventListener('change', () => {
+                renderMiners({ showSold: Boolean(showSoldNftsToggle.checked) });
+            });
+        }
+
+        renderMiners({ showSold: Boolean(showSoldNftsToggle?.checked) });
     } catch (error) {
         console.error('Error loading miners:', error);
         minerList.innerHTML = '<p>Error loading miners.</p>';
@@ -562,10 +734,17 @@ document.addEventListener("DOMContentLoaded", async () => {
         document.getElementById('clan-list').innerHTML = `<li>Error loading clan members.</li>`;
     }
 
-    const marketplaceReloadBtn = document.getElementById('marketplaceReloadBtn');
-    if (marketplaceReloadBtn) {
-        marketplaceReloadBtn.addEventListener('click', () => {
+    const marketplaceTopN = document.getElementById('marketplaceTopN');
+    if (marketplaceTopN) {
+        marketplaceTopN.addEventListener('change', () => {
             void loadMarketplaceCheapest();
+        });
+    }
+
+    const poolRewardsReloadBtn = document.getElementById('poolRewardsReloadBtn');
+    if (poolRewardsReloadBtn) {
+        poolRewardsReloadBtn.addEventListener('click', () => {
+            void loadPoolRewards();
         });
     }
 });
@@ -603,6 +782,10 @@ document.querySelectorAll('.tab').forEach(tab => {
 
         if (target === 'marketplace-info') {
             void loadMarketplaceCheapest();
+        }
+
+        if (target === 'pool-rewards-info') {
+            void loadPoolRewards();
         }
     });
 });
