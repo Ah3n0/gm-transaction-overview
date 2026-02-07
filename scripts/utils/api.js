@@ -1,33 +1,141 @@
-import { BASE_URL, MINER_UPGRADE_URL, MINER_BUY_URL, DISCOUNT_URL, MAINTENANCE_STATE_URL, USER_REWARDS_URL, CLAN_MEMBER_URL, MARKETPLACE_ORDER_URL, PUSH_SERVICE_URL } from "../config.js";
+import { MINER_UPGRADE_URL, MINER_BUY_URL, DISCOUNT_URL, MAINTENANCE_STATE_URL, USER_REWARDS_URL, CLAN_MEMBER_URL, CLAN_MY_URL, CLAN_BY_ID_URL, MARKETPLACE_ORDER_URL, MARKETPLACE_ORDER_INDEX_URL, MARKETPLACE_ORDER_INDEX_APP_URL, NFT_MARKETPLACE_INDEX_URL, NFT_MARKETPLACE_INDEX_APP_URL, PUSH_SERVICE_URL } from "../config.js";
 
-async function fetchFromAPI(url, body, bearerToken) {
+function createApiError({ url, status, statusText, responseText }) {
+    const suffix = responseText ? `: ${responseText}` : "";
+    const message = `API request failed (${status}) ${statusText}${suffix}`;
+
+    const error = new Error(message);
+    error.url = url;
+    error.status = status;
+    error.statusText = statusText;
+    error.responseText = responseText;
+    return error;
+}
+
+async function fetchFromAPI(url, body, bearerToken, options = {}) {
+    const { method = "POST" } = options;
+
     const headers = {
         Authorization: `Bearer ${bearerToken}`,
         "Content-Type": "application/json",
     };
 
-    const response = await fetch(url, {
-        method: "POST",
-        headers: headers,
-        body: JSON.stringify(body),
-    });
+    const init = {
+        method,
+        headers,
+        ...(method === "GET" ? {} : { body: JSON.stringify(body ?? {}) }),
+    };
+
+    const response = await fetch(url, init);
 
     if (!response.ok) {
+        const responseText = await response.text().catch(() => "");
         if (response.status === 401) {
-            throw new Error("Unauthorized. Please ensure you are logged in.");
+            throw createApiError({
+                url,
+                status: response.status,
+                statusText: "Unauthorized",
+                responseText: responseText || "Please ensure you are logged in.",
+            });
         }
-        throw new Error(`API request failed: ${response.statusText}`);
+
+        throw createApiError({
+            url,
+            status: response.status,
+            statusText: response.statusText,
+            responseText,
+        });
     }
 
-    return await response.json();
+    try {
+        return await response.json();
+    } catch (error) {
+        const responseText = await response.text().catch(() => "");
+        throw createApiError({
+            url,
+            status: response.status,
+            statusText: "Invalid JSON",
+            responseText,
+        });
+    }
 }
 
-export async function fetchData(skip, bearerToken) {
-    const body = {
-        filters: {},
-        pagination: { skip: skip, limit: 50 },
+async function fetchFromPublicAPI(url, body, options = {}) {
+    const { method = "POST" } = options;
+
+    const headers = {
+        "Content-Type": "application/json",
     };
-    return fetchFromAPI(BASE_URL, body, bearerToken);
+
+    const init = {
+        method,
+        headers,
+        credentials: "omit",
+        ...(method === "GET" ? {} : { body: JSON.stringify(body ?? {}) }),
+    };
+
+    const response = await fetch(url, init);
+
+    if (!response.ok) {
+        const responseText = await response.text().catch(() => "");
+        throw createApiError({
+            url,
+            status: response.status,
+            statusText: response.statusText,
+            responseText,
+        });
+    }
+
+    try {
+        return await response.json();
+    } catch (error) {
+        const responseText = await response.text().catch(() => "");
+        throw createApiError({
+            url,
+            status: response.status,
+            statusText: "Invalid JSON",
+            responseText,
+        });
+    }
+}
+
+async function fetchFromCookieAPI(url, body, options = {}) {
+    const { method = "POST" } = options;
+
+    const headers = {
+        "Content-Type": "application/json",
+    };
+
+    const init = {
+        method,
+        headers,
+        credentials: "include",
+        ...(method === "GET" ? {} : { body: JSON.stringify(body ?? {}) }),
+    };
+
+    const response = await fetch(url, init);
+
+    if (!response.ok) {
+        const responseText = await response.text().catch(() => "");
+        throw createApiError({
+            url,
+            status: response.status,
+            statusText: response.statusText,
+            responseText,
+        });
+    }
+
+    try {
+        return await response.json();
+    } catch (error) {
+        const responseText = await response.text().catch(() => "");
+        throw createApiError({
+            url,
+            status: response.status,
+            statusText: "Invalid JSON",
+            responseText,
+        });
+    }
 }
 
 export async function fetchNFT(skip, bearerToken) {
@@ -70,19 +178,150 @@ export async function fetchUserRewards(bearerToken) {
 }
 
 export async function fetchClanMember(bearerToken) {
+    const limit = 50;
+    const maxPages = 200;
+
     let allMembers = [];
     let skip = 0;
-    let hasMore = true;
+    let paginationMode = "unknown"; // "pagination" | "single"
 
-    while (hasMore) {
+    const extractMembers = (response) => {
+        const data = response?.data;
+        if (Array.isArray(data)) return data;
+
+        // The API response shape has changed before. Be defensive.
+        const candidates = [
+            data?.usersForClient,
+            data?.users,
+            data?.array,
+            data?.members,
+            data?.items,
+        ];
+
+        const firstArray = candidates.find((value) => Array.isArray(value));
+        return firstArray ?? [];
+    };
+
+    const extractClanId = (response) => {
+        const data = response?.data;
+        const id = data?.id ?? data?.clanId ?? data?.clan?.id;
+        return typeof id === "number" ? id : null;
+    };
+
+    const fetchClanById = async ({ clanId, skip, limit }) => {
+        // Payload based on observed API behavior
         const body = {
-            pagination: { skip: skip, limit: 50 }
+            clanId,
+            pagination: { limit, skip, count: 0 },
+            filters: { filterType: "none" },
+            sort: { sortType: "none" },
         };
-        const response = await fetchFromAPI(CLAN_MEMBER_URL, body, bearerToken);
-        const members = response.data.usersForClient;
+
+        return fetchFromAPI(CLAN_BY_ID_URL, body, bearerToken);
+    };
+
+    const fetchWithFallbacks = async (url, body) => {
+        try {
+            return await fetchFromAPI(url, body, bearerToken);
+        } catch (error) {
+            // Some backends changed from POST to GET.
+            if (error?.status === 405) {
+                return await fetchFromAPI(url, undefined, bearerToken, { method: "GET" });
+            }
+
+            throw error;
+        }
+    };
+
+    const fetchMyClan = async (body) => {
+        const candidates = [CLAN_MEMBER_URL, CLAN_MY_URL];
+
+        let lastError;
+        for (const url of candidates) {
+            try {
+                return await fetchWithFallbacks(url, body);
+            } catch (error) {
+                // If endpoint does not exist, try the next one.
+                if (error?.status === 404) {
+                    lastError = error;
+                    continue;
+                }
+                throw error;
+            }
+        }
+
+        throw lastError ?? new Error("No clan endpoint available.");
+    };
+
+    // 1) Try "my clan" endpoint first (historical behavior)
+    //    If it returns users -> we are done.
+    //    If it returns only clan info/id -> use get-by-id to fetch members.
+    let clanIdFromMyClan = null;
+
+    for (let page = 1; page <= maxPages; page++) {
+        let response;
+
+        // Prefer pagination. If the API no longer supports it, fall back to a single request.
+        if (paginationMode !== "single") {
+            try {
+                response = await fetchMyClan({ pagination: { skip, limit } });
+                paginationMode = "pagination";
+            } catch (error) {
+                // If pagination is rejected (often 400/422), try a single-call mode once.
+                if (page === 1 && (error?.status === 400 || error?.status === 404 || error?.status === 422)) {
+                    response = await fetchMyClan({});
+                    paginationMode = "single";
+                } else {
+                    throw error;
+                }
+            }
+        } else {
+            response = await fetchMyClan({});
+        }
+
+        if (page === 1) {
+            clanIdFromMyClan = extractClanId(response);
+        }
+
+        let members = extractMembers(response);
+
+        // If "my clan" endpoint no longer includes members, use get-by-id.
+        if (page === 1 && members.length === 0 && clanIdFromMyClan) {
+            let byIdSkip = 0;
+            for (let byIdPage = 1; byIdPage <= maxPages; byIdPage++) {
+                const byIdResponse = await fetchClanById({ clanId: clanIdFromMyClan, skip: byIdSkip, limit });
+                const byIdMembers = byIdResponse?.data?.usersForClient ?? [];
+
+                if (Array.isArray(byIdMembers) && byIdMembers.length > 0) {
+                    allMembers = allMembers.concat(byIdMembers);
+                }
+
+                const usersCount = typeof byIdResponse?.data?.usersCount === "number" ? byIdResponse.data.usersCount : null;
+                byIdSkip += limit;
+
+                if (!Array.isArray(byIdMembers) || byIdMembers.length < limit) {
+                    break;
+                }
+
+                if (usersCount !== null && byIdSkip >= usersCount) {
+                    break;
+                }
+            }
+
+            return { data: { usersForClient: allMembers } };
+        }
+
         allMembers = allMembers.concat(members);
-        skip += 50;
-        hasMore = members.length === 50;
+        skip += limit;
+
+        if (paginationMode === "single") {
+            break;
+        }
+
+        // Stop when we receive less than a full page.
+        if (members.length < limit) {
+            break;
+        }
     }
 
     return { data: { usersForClient: allMembers } };
@@ -93,6 +332,350 @@ export async function fetchMarketplaceOrders(bearerToken) {
         pagination: { skip: 0, limit: 20 }
     };
     return fetchFromAPI(MARKETPLACE_ORDER_URL, body, bearerToken);
+}
+
+async function fetchMarketplaceOrderIndexPage(bearerToken, body) {
+    const apiUrl = MARKETPLACE_ORDER_INDEX_URL;
+    const appUrl = MARKETPLACE_ORDER_INDEX_APP_URL;
+
+    const attempts = [];
+
+    const recordAttempt = (mode, url, error) => {
+        attempts.push({
+            mode,
+            url,
+            status: error?.status,
+            statusText: error?.statusText,
+            responseText: error?.responseText,
+        });
+    };
+
+    const isInvalidAudience = (error) => {
+        const responseText = String(error?.responseText ?? "");
+        return error?.status === 403 && responseText.includes("INVALID_AUDIENCE");
+    };
+
+    // 0) Try without any auth at all (some listing endpoints may be public).
+    try {
+        return await fetchFromPublicAPI(apiUrl, body);
+    } catch (error) {
+        recordAttempt("public", apiUrl, error);
+    }
+
+    try {
+        return await fetchFromPublicAPI(appUrl, body);
+    } catch (error) {
+        recordAttempt("public", appUrl, error);
+    }
+
+    // 1) Try API endpoint with bearer token (preferred).
+    try {
+        return await fetchFromAPI(apiUrl, body, bearerToken);
+    } catch (error) {
+        recordAttempt("bearer", apiUrl, error);
+        // Some endpoints validate JWT audience differently.
+        if (error?.status !== 404 && !isInvalidAudience(error)) {
+            // For non-expected failures, bubble up immediately.
+            // (404 and INVALID_AUDIENCE will fall back to app/cookie flows)
+            throw error;
+        }
+    }
+
+    // 2) Try APP endpoint with bearer token.
+    try {
+        return await fetchFromAPI(appUrl, body, bearerToken);
+    } catch (error) {
+        recordAttempt("bearer", appUrl, error);
+        if (error?.status !== 404 && !isInvalidAudience(error)) {
+            throw error;
+        }
+    }
+
+    // 3) Try APP endpoint with cookies (no bearer token).
+    try {
+        return await fetchFromCookieAPI(appUrl, body);
+    } catch (error) {
+        recordAttempt("cookie", appUrl, error);
+        const enriched = error instanceof Error ? error : new Error(String(error));
+        enriched.marketplaceAttempts = attempts;
+        throw enriched;
+    }
+}
+
+export function extractMarketplaceOrderArray(response) {
+    const data = response?.data;
+    if (Array.isArray(data)) return data;
+
+    const candidates = [
+        data?.array,
+        data?.items,
+        data?.orders,
+        data?.list,
+        data?.result,
+    ];
+
+    const firstArray = candidates.find((value) => Array.isArray(value));
+    return firstArray ?? [];
+}
+
+function toNumberOrNull(value) {
+    const number = typeof value === "number" ? value : Number(value);
+    return Number.isFinite(number) ? number : null;
+}
+
+function pickFirstNumber(obj, paths) {
+    for (const path of paths) {
+        const value = path.split('.').reduce((acc, key) => (acc && acc[key] !== undefined ? acc[key] : undefined), obj);
+        const number = toNumberOrNull(value);
+        if (number !== null) return number;
+    }
+    return null;
+}
+
+function pickFirstString(obj, paths) {
+    for (const path of paths) {
+        const value = path.split('.').reduce((acc, key) => (acc && acc[key] !== undefined ? acc[key] : undefined), obj);
+        if (typeof value === "string" && value.trim()) return value;
+    }
+    return null;
+}
+
+export function mapMarketplaceOrderToDeal(order) {
+    // Be defensive: response shape is not documented and might change.
+    const name =
+        pickFirstString(order, [
+            "nft.name",
+            "nft.title",
+            "name",
+            "title",
+            "nftName",
+        ]) ??
+        "Unknown Miner";
+
+    const powerTh = pickFirstNumber(order, [
+        "nft.power",
+        "nft.hashRateTh",
+        "nft.powerTh",
+        "power",
+        "hashRateTh",
+        "powerTh",
+        "power",
+        "powerTh",
+        "hashRateTh",
+    ]);
+
+    const priceUsd = pickFirstNumber(order, [
+        "priceUsd",
+        "priceInUsd",
+        "usdPrice",
+        "price.usd",
+        "price.value",
+        "price",
+    ]);
+
+    // Some APIs store power in H/s (or GH/s). If power looks unrealistically large, treat it as H/s and convert to TH.
+    let normalizedPowerTh = powerTh;
+    if (normalizedPowerTh !== null && normalizedPowerTh > 1e6) {
+        normalizedPowerTh = normalizedPowerTh / 1e12;
+    }
+
+    if (normalizedPowerTh === null || normalizedPowerTh <= 0 || priceUsd === null || priceUsd <= 0) {
+        return null;
+    }
+
+    const usdPerTh = priceUsd / normalizedPowerTh;
+
+    const imageUrl = pickFirstString(order, [
+        "nft.smallImageUrl",
+        "nft.imageUrl",
+        "nft.previewUrl",
+        "smallImageUrl",
+        "imageUrl",
+        "previewUrl",
+    ]);
+
+    // Prefer server-provided URL if present.
+    const explicitUrl = pickFirstString(order, [
+        // Common top-level candidates
+        "marketplaceUrl",
+        "viewUrl",
+        "url",
+        "link",
+        // Nested candidates
+        "nft.marketplaceUrl",
+        "nft.viewUrl",
+        "nft.url",
+        "nft.link",
+        "nft.detailsUrl",
+    ]);
+
+    // Observed: the UUID used in `https://app.gomining.com/nft/view/<uuid>` is often provided as `externalUrlId`.
+    const externalUrlId = pickFirstString(order, [
+        "externalUrlId",
+        "nft.externalUrlId",
+    ]);
+
+    const key = pickFirstString(order, [
+        "nft.key",
+        "nftKey",
+        "key",
+        "nft.nftKey",
+    ]);
+
+    const id = pickFirstNumber(order, [
+        "nftId",
+        "nft.id",
+        "id",
+        "nftIdForClient",
+    ]);
+
+    const marketplaceType = pickFirstString(order, [
+        "marketplace",
+        "marketplaceType",
+        "filters.marketplace",
+    ]);
+
+    const fallbackUrl = "https://app.gomining.com/marketplace";
+
+    const nftViewUrl = externalUrlId
+        ? `https://app.gomining.com/nft/view/${encodeURIComponent(externalUrlId)}`
+        : (id !== null
+            ? `https://app.gomining.com/nft/view/${encodeURIComponent(String(id))}`
+            : null);
+
+    // Accept both integer IDs and UUIDs.
+    const isNftViewUrl = (url) => typeof url === "string" && /\/nft\/view\/[^/?#]+/.test(url);
+
+    // Prefer the canonical detail URL format the web app uses.
+    // If the API already provides an nft/view URL, keep it; otherwise compute it from id.
+    const marketplaceUrl =
+        nftViewUrl ??
+        (explicitUrl && isNftViewUrl(explicitUrl) ? explicitUrl : null) ??
+        explicitUrl ??
+        fallbackUrl;
+
+    // Keep for future debugging/use.
+    const nftKeyOrId = key ?? externalUrlId ?? (id !== null ? String(id) : null);
+
+    const urlWithMarketplace =
+        marketplaceType && isNftViewUrl(marketplaceUrl)
+            ? `${marketplaceUrl}${marketplaceUrl.includes("?") ? "&" : "?"}marketplace=${encodeURIComponent(marketplaceType)}`
+            : marketplaceUrl;
+
+    return {
+        name,
+        powerTh: normalizedPowerTh,
+        priceUsd,
+        usdPerTh,
+        marketplaceUrl: urlWithMarketplace,
+        imageUrl,
+        nftKeyOrId,
+    };
+}
+
+async function fetchNftMarketplaceIndexPage(bearerToken, body) {
+    // Prefer api.gomining.com. Provide app.gomining.com as fallback.
+    try {
+        return await fetchFromAPI(NFT_MARKETPLACE_INDEX_URL, body, bearerToken);
+    } catch (error) {
+        if (error?.status === 404) {
+            return await fetchFromAPI(NFT_MARKETPLACE_INDEX_APP_URL, body, bearerToken);
+        }
+        throw error;
+    }
+}
+
+/**
+ * Fetches and ranks marketplace miners by price efficiency ($/TH).
+ *
+ * The endpoint contract is not public; this implementation is defensive and may need
+ * adjustments if the backend changes.
+ */
+export async function fetchCheapestMarketplaceMiners(bearerToken, options = {}) {
+    const {
+        top = 10,
+        scanLimit = 300,
+        pageSize = 50,
+    } = options;
+
+    const targetTop = Math.max(1, Math.min(50, Number(top) || 10));
+    const targetScan = Math.max(targetTop, Math.min(2000, Number(scanLimit) || 300));
+    const limit = Math.max(10, Math.min(200, Number(pageSize) || 50));
+
+    const deals = [];
+    let skip = 0;
+
+    // Observed working request shape (defensive defaults).
+    const baseFilters = {
+        marketplace: ["gmt-account", "gmt-secondary"],
+        jacobPrimary: false,
+        status: ["available"],
+        nftCollectionIds: null,
+        body: null,
+        topFan: null,
+        screen: null,
+        ui: null,
+        downFan: null,
+        buttons: null,
+        upgrades: null,
+        walls: null,
+        basement: null,
+        items: null,
+        stickers: null,
+        power: { min: 1, max: 6000 },
+        energyEfficiency: { min: 0, max: 999 },
+        price: { min: 0, max: 999999999 },
+        achievementIds: null,
+        // Observed allowed value in working request examples.
+        currency: "GMT",
+    };
+
+    for (let page = 1; deals.length < targetScan && page <= 100; page++) {
+        const body = {
+            pagination: { skip, limit },
+            filters: baseFilters,
+            sort: { newest: 1 },
+        };
+
+        const response = await fetchNftMarketplaceIndexPage(bearerToken, body);
+
+        const items =
+            response?.data?.array ??
+            response?.data?.items ??
+            response?.data?.list ??
+            response?.data ??
+            [];
+
+        if (!Array.isArray(items) || items.length === 0) {
+            break;
+        }
+
+        for (const item of items) {
+            const deal = mapMarketplaceOrderToDeal(item);
+            if (deal) deals.push(deal);
+            if (deals.length >= targetScan) break;
+        }
+
+        skip += limit;
+        if (items.length < limit) break;
+    }
+
+    deals.sort((a, b) => a.usdPerTh - b.usdPerTh);
+    return deals.slice(0, targetTop);
+}
+
+export function rankMarketplaceDealsFromOrders(orders, options = {}) {
+    const { top = 10 } = options;
+    const targetTop = Math.max(1, Math.min(50, Number(top) || 10));
+
+    const deals = [];
+    for (const order of Array.isArray(orders) ? orders : []) {
+        const deal = mapMarketplaceOrderToDeal(order);
+        if (deal) deals.push(deal);
+    }
+
+    deals.sort((a, b) => a.usdPerTh - b.usdPerTh);
+    return deals.slice(0, targetTop);
 }
 
 export async function pushService(bearerToken) {

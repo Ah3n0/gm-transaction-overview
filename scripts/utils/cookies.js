@@ -7,7 +7,7 @@ export async function getBearerTokenFromCookie() {
         chrome.cookies.getAll({ name: "access_token" }, (cookies) => {
             const gominingToken = cookies.find(cookie => cookie.domain.includes("gomining.com"));
             if (!gominingToken) {
-                reject("No access_token cookie found for GoMining (gomining.com). Please log in to continue.");
+                reject(new Error("No access_token cookie found for GoMining (gomining.com). Please log in to continue."));
             } else {
                 resolve(gominingToken.value);
             }

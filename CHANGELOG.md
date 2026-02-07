@@ -1,5 +1,68 @@
 # Changelog
 
+## Version 0.7.1
+### Removed
+- Export/Transaction-Download: CSV/Koinly/Blockpit Export vollständig entfernt (inkl. ungenutztem Code und Tests).
+
+## Version 0.6.9
+### Fixed
+- Marketplace: handle `INVALID_AUDIENCE` (403) by falling back to cookie-auth on `app.gomining.com`.
+
+## Version 0.6.10
+### Improved
+- Marketplace: try public (no-auth) requests first, then bearer/cookie fallbacks; show detailed diagnostics in the tab when loading fails.
+
+## Version 0.6.11
+### Fixed
+- Marketplace: when the API blocks extension-origin requests (403), fetch listings via an injected request in an `app.gomining.com` tab.
+
+## Version 0.6.12
+### Fixed
+- Marketplace: switch listings source to `POST https://api.gomining.com/api/nft/marketplace-index` (working endpoint).
+
+## Version 0.6.13
+### Fixed
+- Marketplace: `marketplace-index` rejects `filters.currency=USD`; use `GMT` (supported) to avoid 400 errors.
+
+## Version 0.6.14
+### Improved
+- Marketplace: fix NFT links (prefer API-provided URL / better key+id mapping) and show miner thumbnail images.
+
+## Version 0.6.15
+### Fixed
+- Marketplace: NFT links now use the canonical format `https://app.gomining.com/nft/view/<id>`.
+
+## Version 0.6.16
+### Fixed
+- Marketplace: preserve `nft/view/<uuid>` links when present in the API payload (links are often UUID-based).
+
+## Version 0.6.17
+### Fixed
+- Marketplace: build NFT detail links from `externalUrlId` (UUID) when provided by the API.
+
+## Version 0.6.8
+### Added
+- Marketplace: new tab showing the 10 currently cheapest miners by $/TH (with a Reload button).
+
+## Version 0.6.7
+### Removed
+- Clan Members: removed Clan ID override; the popup shows only your own clan.
+
+## Version 0.6.6
+### Changed
+- Clan Members: Clan ID button now reloads the member list immediately (no need to reopen the popup).
+
+## Version 0.6.5
+### Fixed
+- Clan Members: handle removed endpoint (404 on `get-my-with-users`) by falling back to `get-my` and then `get-by-id`.
+### Added
+- Optional Clan ID input in the popup to force member loading via `get-by-id` if clan discovery endpoints change again.
+
+## Version 0.6.4
+### Fixed
+- Clan Members: restored loading by falling back to `get-by-id` when `get-my-with-users` no longer returns member arrays.
+- API errors now include HTTP status and response body for easier debugging.
+
 ## Version 0.6.3
 ### Added
 - user panel collaps

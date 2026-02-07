@@ -1,5 +1,5 @@
 import { readdirSync } from "fs";
-import { exec } from "child_process";
+import { spawnSync } from "child_process";
 import { fileURLToPath } from "url";
 import path from "path";
 
@@ -13,16 +13,21 @@ const testDir = path.resolve(__dirname, "tests");
 // Read all test files in the directory
 const testFiles = readdirSync(testDir).filter((file) => file.endsWith(".test.js"));
 
-// Execute each test file
-testFiles.forEach((file) => {
+let hasFailures = false;
+
+for (const file of testFiles) {
     const filePath = path.resolve(testDir, file);
     console.log(`Running test: ${file}`);
-    exec(`node "${filePath}"`, (err, stdout, stderr) => {
-        if (err) {
-            console.error(`Error running test: ${file}\n${stderr}`);
-            process.exitCode = 1; // Set exit code to 1 if a test fails
-        } else {
-            console.log(stdout);
-        }
+
+    const result = spawnSync(process.execPath, [filePath], {
+        stdio: "inherit",
     });
-});
+
+    if (result.status !== 0) {
+        hasFailures = true;
+    }
+}
+
+if (hasFailures) {
+    process.exitCode = 1;
+}

@@ -1,6 +1,6 @@
-# Chrome Extension: Transaction Downloader
+# Chrome Extension: GoMining Overview
 
-This Chrome extension allows you to inspect cookies, extract the `access_token` automatically, and download transaction data from GoMining in various formats.
+Diese Chrome Extension liest automatisch das GoMining `access_token` aus Cookies aus und zeigt dir im Popup eine Übersicht über deinen Account (NFTs/Miner, Rewards, Clan, Discounts, Marketplace).
 
 [![Version](https://img.shields.io/github/package-json/v/Ah3n0/gm-transaction-overview)](https://github.com/Ah3n0/gm-transaction-overview)
 [![Build Status](https://img.shields.io/github/actions/workflow/status/Ah3n0/gm-transaction-overview/test.yml?branch=master)](https://github.com/Ah3n0/gm-transaction-overview/actions/workflows/test.yml)
@@ -32,9 +32,12 @@ This Chrome extension allows you to inspect cookies, extract the `access_token` 
 2. **Open the Extension** by clicking its icon in the toolbar.
 3. **Follow the On-Screen Instructions**:
    - Ensure you are logged into GoMining (no credentials are required by the extension).
-   - Select the files you wish to download using the provided checkboxes.
-4. **Select NFT** by clicking NFT Info in the top menue
-   - Click NFT -> an action overview is displeyed
+4. **Tabs nutzen** (oben im Popup):
+   - NFT: Miner Übersicht + Events
+   - Rewards: persönliche Rewards
+   - Clan Members: Mitglieder inkl. Sort/Filter + Totals
+   - Discount: Discount + Maintenance Info
+   - Marketplace: 10 günstigste Miner nach $/TH
 5. **Enjoy the Features** offered by the extension!
 
 ---
@@ -42,13 +45,11 @@ This Chrome extension allows you to inspect cookies, extract the `access_token` 
 ## Features
 
 1. **Login Status Check**: Confirms if the user is logged into GoMining.
-2. **File Format Selection**: Supports CSV, Koinly, and Blockpit formats for downloads.
-3. **Transaction Data Download**: Automatically generates and downloads transaction data.
-4. **User-Friendly Interface**: Simple and intuitive design with clear instructions.
-5. **Custom Date Range**: Add functionality to select a specific start date for reports.
-6. **NFT Overview**: List all belonging NFTs and its upgrades.
-7. **Maintenance**: Get current maintenance information and service button. Auto click is activated.
-8. Clan Member and personal rewards are shown. Filter included.
+2. **NFT Overview**: List all belonging NFTs and their upgrades.
+3. **Rewards**: Personal rewards overview.
+4. **Clan Members**: Member list with sorting/filtering and computed totals.
+5. **Discount & Maintenance**: Current discount and maintenance information + service button.
+6. **Marketplace**: Shows the 10 currently cheapest miners by $/TH.
 
 ---
 
@@ -66,9 +67,9 @@ We welcome contributions to improve this project. To get started:
 ## Roadmap
 
 Here are some planned features and improvements for future updates:
-1. **Background Processing**: Allow downloads to continue processing even when the popup is closed.
+1. **Background Processing**: Allow long-running operations to continue even when the popup is closed.
 2. **Wallet Integration**: Add BTC wallet support and enable wallet selection.
-3. **Buy/Sell Data**: Include transactions unrelated to GMT/BTC wallets in the generated files.
+3. **Buy/Sell Data**: Include additional account data where useful.
 4. Show Clan joiner and leaver.
 
 ---

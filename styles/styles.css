@@ -25,14 +25,14 @@ h2 {
     padding: 20px;
 }
 
-.container, .nft-info, .mw-info, .discount-info, .user-info, .rewards-info, .clan-info {
+.nft-info, .discount-info, .user-info, .rewards-info, .clan-info, .marketplace-info {
     background: #ffffff;
     border-radius: 12px;
     padding: 20px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-.container, .nft-info, .discount-info, .mw-info, .rewards-info, .clan-info {
+.nft-info, .discount-info, .rewards-info, .clan-info, .marketplace-info {
     width: 500px;
     flex: 2;
     margin: 0 auto;
@@ -78,34 +78,12 @@ h2 {
     transform: rotate(180deg);
 }
 
-.user-info.collapsed ~ .container,
 .user-info.collapsed ~ .nft-info,
 .user-info.collapsed ~ .discount-info,
-.user-info.collapsed ~ .mw-info,
 .user-info.collapsed ~ .rewards-info,
-.user-info.collapsed ~ .clan-info {
+.user-info.collapsed ~ .clan-info,
+.user-info.collapsed ~ .marketplace-info {
     width: 600px;
-}
-
-/* Status Label */
-.status-label {
-    text-align: center;
-    margin-top: 20px;
-    font-size: 0.9rem;
-    color: #555;
-    display: none;
-    padding: 10px;
-    border-radius: 6px;
-}
-
-.status-label.success {
-    background-color: #e0f7e9;
-    color: #28a745;
-}
-
-.status-label.error {
-    background-color: #f8d7da;
-    color: #dc3545;
 }
 
 /* Forms */
@@ -117,18 +95,6 @@ label {
     color: #555;
 }
 
-input[type="checkbox"] {
-    margin-right: 10px;
-    accent-color: #007bff;
-}
-
-input[type="date"] {
-    margin-right: 10px;
-    padding: 5px 10px;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    font-size: 1rem;
-}
 
 button {
     display: block;
@@ -152,18 +118,6 @@ button:active {
     transform: translateY(0);
 }
 
-#clear-date {
-    font-size: 0.9rem;
-    color: #007bff;
-    text-decoration: none;
-    margin-left: 10px;
-    cursor: pointer;
-    transition: color 0.3s;
-}
-
-#clear-date:hover {
-    color: #0056b3;
-}
 
 /* Accordion */
 .accordion {
@@ -254,18 +208,6 @@ button:active {
 
 .tab-panel.active {
     display: block;
-}
-
-/* Loader */
-#loader {
-    display: none;
-    margin: 20px auto;
-    text-align: center;
-}
-
-#loader img {
-    width: 40px;
-    height: 40px;
 }
 
 /* Footer Info */
@@ -473,4 +415,116 @@ select:focus {
 .image-container {
     position: relative;
     display: inline-block;
+}
+
+/* Marketplace */
+.toolbar {
+    display: flex;
+    justify-content: flex-end;
+    margin: 10px 0 15px;
+}
+
+.marketplace-table {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.marketplace-row {
+    display: flex;
+    gap: 12px;
+    padding: 12px;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+}
+
+.marketplace-rank {
+    width: 44px;
+    font-weight: bold;
+    color: #007bff;
+}
+
+.marketplace-thumb {
+    width: 48px;
+    height: 48px;
+    flex: 0 0 48px;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid #eee;
+    background: #f4f6f8;
+}
+
+.marketplace-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.marketplace-thumb-placeholder {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #eef2f6, #f9fafb);
+}
+
+.marketplace-main {
+    flex: 1;
+    min-width: 0;
+}
+
+.marketplace-name {
+    font-size: 1rem;
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.marketplace-name a {
+    color: #007bff;
+    text-decoration: none;
+}
+
+.marketplace-name a:hover {
+    text-decoration: underline;
+}
+
+.marketplace-meta {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    font-size: 0.9rem;
+    color: #555;
+}
+
+.marketplace-error-details {
+    margin-top: 10px;
+}
+
+.marketplace-error-details summary {
+    cursor: pointer;
+    color: #007bff;
+}
+
+.marketplace-error-details ul {
+    list-style: none;
+    padding: 0;
+    margin: 10px 0 0;
+}
+
+.marketplace-error-details li {
+    padding: 8px;
+    border: 1px solid #eee;
+    border-radius: 6px;
+    margin-bottom: 8px;
+    background: #fafafa;
+    word-break: break-word;
+}
+
+.marketplace-error-response {
+    margin-top: 6px;
+    font-size: 0.85rem;
+    color: #666;
 }

@@ -1,89 +1,211 @@
 import { 
     AUTH_URL, 
-    OUTPUT_CSV_FILE, 
-    KOINLY_CSV_FILE, 
-    BLOCKPIT_CSV_FILE, 
-    CSV_HEADER, 
-    KOINLY_HEADER, 
-    BLOCKPIT_HEADER 
 } from './config.js';
 
-import { writeToCSV } from './utils/file.js';
-import { fetchDiscount, fetchNFT, fetchMaintenanceState, fetchUserRewards, fetchClanMember, fetchMarketplaceOrders } from './utils/api.js';
+import { fetchDiscount, fetchNFT, fetchMaintenanceState, fetchUserRewards, fetchClanMember, fetchMarketplaceOrders, fetchCheapestMarketplaceMiners, rankMarketplaceDealsFromOrders } from './utils/api.js';
 import { formatDate } from './utils/time.js';
-import { mapToKoinly, mapToBlockpit } from './utils/mappers.js';
 import { getBearerTokenFromCookie } from './utils/cookies.js';
-import { updateStatusLabel, fetchAllEntries, displayMinerEvents, handleButtonActivation } from './utils/ui.js';
+import { displayMinerEvents, handleButtonActivation } from './utils/ui.js';
 
-// Main function to handle the button click event
-async function main() {
-    const button = document.getElementById("inspect-cookies");
-    const loader = document.getElementById("loader");
-    const statusLabel = document.getElementById("status-label");
-    const datePicker = document.getElementById("start-date-picker");
-    const progressLabel = document.createElement("div");
-    progressLabel.id = "progress-label";
-    progressLabel.style.marginTop = "10px";
-    progressLabel.style.color = "#555";
-    progressLabel.style.display = "none";
-    document.querySelector(".container").appendChild(progressLabel);
+function escapeHtml(unsafe) {
+    return String(unsafe)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/\"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+function formatMoneyUsd(value) {
+    const number = typeof value === "number" ? value : Number(value);
+    if (!Number.isFinite(number)) return "-";
+    return `$${number.toFixed(2)}`;
+}
+
+function formatTh(value) {
+    const number = typeof value === "number" ? value : Number(value);
+    if (!Number.isFinite(number)) return "-";
+    return `${number.toFixed(2)} TH`;
+}
+
+function formatUsdPerTh(value) {
+    const number = typeof value === "number" ? value : Number(value);
+    if (!Number.isFinite(number)) return "-";
+    return `$${number.toFixed(4)} / TH`;
+}
+
+async function loadMarketplaceCheapest() {
+    const listEl = document.getElementById('marketplaceList');
+    if (!listEl) return;
+
+    listEl.innerHTML = '<p>Loading...</p>';
 
     try {
-        const csvChecked = document.getElementById("csv-checkbox").checked;
-        const koinlyChecked = document.getElementById("koinly-checkbox").checked;
-        const blockpitChecked = document.getElementById("blockpit-checkbox").checked;
+        const bearerToken = await getBearerTokenFromCookie();
+        const deals = await fetchCheapestMarketplaceMiners(bearerToken, { top: 10, scanLimit: 300, pageSize: 50 });
 
-        // Ensure at least one option is selected
-        if (!csvChecked && !koinlyChecked && !blockpitChecked) {
-            updateStatusLabel(statusLabel, "Please select at least one option.", true);
+        if (!Array.isArray(deals) || deals.length === 0) {
+            listEl.innerHTML = '<p>No marketplace deals found (or missing fields).</p>';
             return;
         }
 
-        // Get the selected start date
-        const startDate = datePicker.value ? new Date(`${datePicker.value}T00:00:00`) : null;
+        const rows = deals
+            .map((deal, idx) => {
+                const name = deal?.name ?? 'Unknown Miner';
+                const url = deal?.marketplaceUrl ?? 'https://app.gomining.com/marketplace';
+                const imageUrl = deal?.imageUrl;
 
-        // Get bearer token from cookies
-        const bearerToken = await getBearerTokenFromCookie().catch((error) => {
-            throw new Error("No access_token found. Please log in to GoMining (https://app.gomining.com) and try again.");
-        });
+                return `
+                    <div class="marketplace-row">
+                        <div class="marketplace-rank">#${idx + 1}</div>
+                        <div class="marketplace-thumb">
+                            ${imageUrl ? `<img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(name)}">` : `<div class="marketplace-thumb-placeholder"></div>`}
+                        </div>
+                        <div class="marketplace-main">
+                            <div class="marketplace-name"><a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(name)}</a></div>
+                            <div class="marketplace-meta">
+                                <span>${formatMoneyUsd(deal?.priceUsd)}</span>
+                                <span>•</span>
+                                <span>${formatTh(deal?.powerTh)}</span>
+                                <span>•</span>
+                                <span><strong>${formatUsdPerTh(deal?.usdPerTh)}</strong></span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            })
+            .join('');
 
-        // Update UI elements to show loading state
-        button.style.display = "none";
-        button.disabled = true;
-        loader.style.display = "inline-block";
-        statusLabel.style.display = "none";
-        progressLabel.style.display = "block";
-
-        // Fetch all entries
-        const allEntries = await fetchAllEntries(bearerToken, datePicker, progressLabel);
-
-        progressLabel.style.display = "none";
-
-        // Write data to CSV files based on selected options
-        if (csvChecked) writeToCSV(OUTPUT_CSV_FILE, allEntries, CSV_HEADER);
-        if (koinlyChecked) writeToCSV(KOINLY_CSV_FILE, allEntries.map(mapToKoinly), KOINLY_HEADER);
-        if (blockpitChecked) writeToCSV(BLOCKPIT_CSV_FILE, allEntries.map(mapToBlockpit), BLOCKPIT_HEADER);
-
-        updateStatusLabel(statusLabel, "Download successful!", false);
+        listEl.innerHTML = `<div class="marketplace-table">${rows}</div>`;
     } catch (error) {
-        console.error("Error:", error);
-        updateStatusLabel(statusLabel, error.message || "Error during download!", true);
-    } finally {
-        // Reset UI elements to initial state
-        button.style.display = "inline-block";
-        button.disabled = false;
-        loader.style.display = "none";
-        progressLabel.style.display = "none";
+        if (error?.status === 403 && chrome?.runtime?.sendMessage) {
+            try {
+                listEl.innerHTML = '<p>Blocked (403). Retrying via app.gomining.com tab...</p>';
+                const bearerToken = await getBearerTokenFromCookie();
+                const deals = await loadMarketplaceCheapestViaTab(bearerToken);
+                if (Array.isArray(deals) && deals.length > 0) {
+                    const rows = deals
+                        .map((deal, idx) => {
+                            const name = deal?.name ?? 'Unknown Miner';
+                            const url = deal?.marketplaceUrl ?? 'https://app.gomining.com/marketplace';
+                            const imageUrl = deal?.imageUrl;
+
+                            return `
+                                <div class="marketplace-row">
+                                    <div class="marketplace-rank">#${idx + 1}</div>
+                                    <div class="marketplace-thumb">
+                                        ${imageUrl ? `<img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(name)}">` : `<div class="marketplace-thumb-placeholder"></div>`}
+                                    </div>
+                                    <div class="marketplace-main">
+                                        <div class="marketplace-name"><a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(name)}</a></div>
+                                        <div class="marketplace-meta">
+                                            <span>${formatMoneyUsd(deal?.priceUsd)}</span>
+                                            <span>•</span>
+                                            <span>${formatTh(deal?.powerTh)}</span>
+                                            <span>•</span>
+                                            <span><strong>${formatUsdPerTh(deal?.usdPerTh)}</strong></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        })
+                        .join('');
+
+                    listEl.innerHTML = `<div class="marketplace-table">${rows}</div>`;
+                    return;
+                }
+            } catch (fallbackError) {
+                console.error('Marketplace tab retry failed:', fallbackError);
+            }
+        }
+        console.error('Error loading marketplace:', error);
+        const message = error?.message ? escapeHtml(error.message) : 'Unknown error';
+
+        const urlHint = error?.url ? `<div class="marketplace-error-hint"><strong>URL:</strong> ${escapeHtml(error.url)}</div>` : '';
+        const attempts = Array.isArray(error?.marketplaceAttempts) ? error.marketplaceAttempts : [];
+        const attemptsHtml = attempts.length
+            ? `
+                <details class="marketplace-error-details">
+                    <summary>Details</summary>
+                    <ul>
+                        ${attempts.map((a) => {
+                            const status = a?.status ? String(a.status) : '-';
+                            const mode = a?.mode ? escapeHtml(a.mode) : 'unknown';
+                            const url = a?.url ? escapeHtml(a.url) : '-';
+                            const statusText = a?.statusText ? escapeHtml(a.statusText) : '';
+                            const responseText = a?.responseText ? escapeHtml(String(a.responseText)).slice(0, 500) : '';
+                            return `<li><strong>${mode}</strong> ${status} ${statusText} — ${url}${responseText ? `<div class="marketplace-error-response">${responseText}</div>` : ''}</li>`;
+                        }).join('')}
+                    </ul>
+                </details>
+            `
+            : '';
+
+        listEl.innerHTML = `<p>Error loading marketplace: ${message}</p>${urlHint}${attemptsHtml}`;
     }
 }
 
-// Add event listener to the button
-document.getElementById("inspect-cookies").addEventListener("click", main);
+async function loadMarketplaceCheapestViaTab(bearerToken) {
+    const pageSize = 50;
+    const scanLimit = 300;
+
+    const allOrders = [];
+    for (let skip = 0; skip < scanLimit; skip += pageSize) {
+        const body = {
+            pagination: { skip, limit: pageSize },
+            filters: {
+                marketplace: ["gmt-account", "gmt-secondary"],
+                jacobPrimary: false,
+                status: ["available"],
+                nftCollectionIds: null,
+                body: null,
+                topFan: null,
+                screen: null,
+                ui: null,
+                downFan: null,
+                buttons: null,
+                upgrades: null,
+                walls: null,
+                basement: null,
+                items: null,
+                stickers: null,
+                power: { min: 1, max: 6000 },
+                energyEfficiency: { min: 0, max: 999 },
+                price: { min: 0, max: 999999999 },
+                achievementIds: null,
+                currency: "GMT",
+            },
+            sort: { newest: 1 },
+        };
+
+        const result = await chrome.runtime.sendMessage({
+            type: 'GM_FETCH_MARKETPLACE_INDEX',
+            url: 'https://api.gomining.com/api/nft/marketplace-index',
+            body,
+            bearerToken,
+        });
+
+        if (!result?.ok) {
+            const responseText = result?.responseText ? String(result.responseText) : '';
+            throw new Error(`Tab fetch failed (${result?.status ?? 0}) ${result?.statusText ?? ''}: ${responseText}`);
+        }
+
+        const items =
+            result?.json?.data?.array ??
+            result?.json?.data?.items ??
+            result?.json?.data?.list ??
+            result?.json?.data ??
+            [];
+        if (!Array.isArray(items) || items.length === 0) break;
+        allOrders.push(...items);
+        if (items.length < pageSize) break;
+    }
+
+    return rankMarketplaceDealsFromOrders(allOrders, { top: 10 });
+}
 
 // Event listener for DOM content loaded
 document.addEventListener("DOMContentLoaded", async () => {
-    const datePicker = document.getElementById("start-date-picker");
-    const clearDateLink = document.getElementById("clear-date");
     const createdAtElement = document.getElementById("createdAt");
     const manifest = chrome.runtime.getManifest();
     const minerList = document.getElementById('miner-list');
@@ -114,12 +236,6 @@ document.addEventListener("DOMContentLoaded", async () => {
             // Format and display the user's creation date
             const formattedDate = formatDate(userData.createdAt).split(" ")[0];
             createdAtElement.textContent = formattedDate || "";
-
-            // Set the initial value of the date picker to the user's creation date
-            if (datePicker && formattedDate) {
-                const formattedPickerDate = new Date(formattedDate).toISOString().split('T')[0];
-                datePicker.value = formattedPickerDate;
-            }
         } else {
             throw new Error("No user data found.");
         }
@@ -137,7 +253,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         toggleIcon.textContent = userInfo.classList.contains('collapsed') ? '>' : '<';
 
         // Adjust the width of other containers
-        document.querySelectorAll('.container, .nft-info, .discount-info, .mw-info, .rewards-info, .clan-info').forEach(container => {
+        document.querySelectorAll('.nft-info, .discount-info, .rewards-info, .clan-info, .marketplace-info').forEach(container => {
             container.style.width = userInfo.classList.contains('collapsed') ? '600px' : '500px';
         });
     });
@@ -276,161 +392,182 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // Fetch clan members
     try {
-        const bearerToken = await getBearerTokenFromCookie();
-        const clanData = await fetchClanMember(bearerToken);
-        let clanMembers = clanData.data.usersForClient;
-
         const clanList = document.getElementById('clan-list');
         const clanMemberCount = document.getElementById('clan-member-count');
         const sortSelect = document.getElementById('sort-clan-members');
         const filterSelect = document.getElementById('filter-clan-members');
         const totalSumElement = document.getElementById('total-sum');
-        clanList.innerHTML = '';
-        clanMemberCount.textContent = clanMembers.length;
 
-        if (clanMembers.length === 0) {
-            clanList.innerHTML = '<li>No clan members found. You are in Solo Mining.</li>';
-        } else {
-            function renderClanMembers(members) {
-                clanList.innerHTML = '';
-                let totalSum = 0;
-                members.forEach(member => {
-                    const joinDate = new Date(member.joinDate);
-                    const utcJoinDate = joinDate.toUTCString();
-                    const isOwner = member.isOwner ? 'clan-owner' : '';
+        if (!clanList || !clanMemberCount || !sortSelect || !filterSelect || !totalSumElement) {
+            throw new Error('Clan UI elements not found.');
+        }
 
-                    const abilities = member.usedNftGameAbilities || [];
-                    const abilityCounts = {
-                        "2ec728e7-f31f-4df3-b486-5e82a4976563": 0,
-                        "44e8af7d-bcfb-4606-a111-5d6ccf1ab463": 0,
-                        "a1f33226-2b51-4b6e-bbfc-eb0a20f0de1c": 0,
-                        "ac859dd7-3981-4a10-886b-7c0b03b7a498": 0
-                    };
+        let clanMembers = [];
 
-                    abilities.forEach(ability => {
-                        if (abilityCounts.hasOwnProperty(ability.nftGameAbilityId)) {
-                            abilityCounts[ability.nftGameAbilityId] = ability.count;
-                        }
-                    });
+        const buildAbilityCounts = (member) => {
+            const abilities = member?.usedNftGameAbilities || [];
+            const counts = {
+                "2ec728e7-f31f-4df3-b486-5e82a4976563": 0,
+                "44e8af7d-bcfb-4606-a111-5d6ccf1ab463": 0,
+                "a1f33226-2b51-4b6e-bbfc-eb0a20f0de1c": 0,
+                "ac859dd7-3981-4a10-886b-7c0b03b7a498": 0
+            };
 
-                    const redSum = abilityCounts["44e8af7d-bcfb-4606-a111-5d6ccf1ab463"] * 1;
-                    const purpleSum = abilityCounts["a1f33226-2b51-4b6e-bbfc-eb0a20f0de1c"] * 9;
-                    const greenSum = abilityCounts["ac859dd7-3981-4a10-886b-7c0b03b7a498"] * 1;
-                    const totalMemberSum = redSum + purpleSum + greenSum;
-                    totalSum += totalMemberSum;
+            abilities.forEach((ability) => {
+                if (counts.hasOwnProperty(ability.nftGameAbilityId)) {
+                    counts[ability.nftGameAbilityId] = ability.count;
+                }
+            });
 
-                    const listItem = document.createElement('li');
-                    listItem.className = `clan-member`;
-                    listItem.innerHTML = `
-                        <div class="summary ${isOwner}">
-                            <strong>Alias:</strong> ${member.alias}
-                        </div>
-                        <div class="details">
-                            <strong>Power:</strong> ${member.power} <br>
-                            <strong>Join Date (UTC):</strong> ${utcJoinDate} <br>
-                            <strong>Ability 1:</strong> <span>${abilityCounts["2ec728e7-f31f-4df3-b486-5e82a4976563"]}</span> <br>
-                            <strong>Ability 2:</strong> <span class="red">${abilityCounts["44e8af7d-bcfb-4606-a111-5d6ccf1ab463"]} (${redSum} GMT)</span> <br>
-                            <strong>Ability 3:</strong> <span class="purple">${abilityCounts["a1f33226-2b51-4b6e-bbfc-eb0a20f0de1c"]} (${purpleSum} GMT)</span> <br>
-                            <strong>Ability 4:</strong> <span class="green">${abilityCounts["ac859dd7-3981-4a10-886b-7c0b03b7a498"]} (${greenSum} GMT)</span> <br>
-                            <strong>Total:</strong> ${totalMemberSum} GMT
-                        </div>
-                    `;
+            return counts;
+        };
 
-                    listItem.querySelector('.summary').addEventListener('click', () => {
-                        listItem.classList.toggle('open');
-                    });
+        const getMemberTotals = (member) => {
+            const abilityCounts = buildAbilityCounts(member);
+            const redSum = abilityCounts["44e8af7d-bcfb-4606-a111-5d6ccf1ab463"] * 1;
+            const purpleSum = abilityCounts["a1f33226-2b51-4b6e-bbfc-eb0a20f0de1c"] * 9;
+            const greenSum = abilityCounts["ac859dd7-3981-4a10-886b-7c0b03b7a498"] * 1;
+            const total = redSum + purpleSum + greenSum;
+            return { abilityCounts, redSum, purpleSum, greenSum, total };
+        };
 
-                    clanList.appendChild(listItem);
+        const renderClanMembers = (members) => {
+            clanList.innerHTML = '';
+            let totalSum = 0;
+
+            if (!Array.isArray(members) || members.length === 0) {
+                clanList.innerHTML = '<li>No clan members found. You are in Solo Mining.</li>';
+                totalSumElement.innerHTML = `<strong>Total Sum:</strong> 0 GMT`;
+                return;
+            }
+
+            members.forEach((member) => {
+                const joinDate = new Date(member.joinDate);
+                const utcJoinDate = joinDate.toUTCString();
+                const isOwner = member.isOwner ? 'clan-owner' : '';
+
+                const { abilityCounts, redSum, purpleSum, greenSum, total } = getMemberTotals(member);
+                totalSum += total;
+
+                const listItem = document.createElement('li');
+                listItem.className = `clan-member`;
+                listItem.innerHTML = `
+                    <div class="summary ${isOwner}">
+                        <strong>Alias:</strong> ${member.alias}
+                    </div>
+                    <div class="details">
+                        <strong>Power:</strong> ${member.power} <br>
+                        <strong>Join Date (UTC):</strong> ${utcJoinDate} <br>
+                        <strong>Ability 1:</strong> <span>${abilityCounts["2ec728e7-f31f-4df3-b486-5e82a4976563"]}</span> <br>
+                        <strong>Ability 2:</strong> <span class="red">${abilityCounts["44e8af7d-bcfb-4606-a111-5d6ccf1ab463"]} (${redSum} GMT)</span> <br>
+                        <strong>Ability 3:</strong> <span class="purple">${abilityCounts["a1f33226-2b51-4b6e-bbfc-eb0a20f0de1c"]} (${purpleSum} GMT)</span> <br>
+                        <strong>Ability 4:</strong> <span class="green">${abilityCounts["ac859dd7-3981-4a10-886b-7c0b03b7a498"]} (${greenSum} GMT)</span> <br>
+                        <strong>Total:</strong> ${total} GMT
+                    </div>
+                `;
+
+                listItem.querySelector('.summary').addEventListener('click', () => {
+                    listItem.classList.toggle('open');
                 });
-                totalSumElement.innerHTML = `<strong>Total Sum:</strong> ${totalSum} GMT`;
+
+                clanList.appendChild(listItem);
+            });
+
+            totalSumElement.innerHTML = `<strong>Total Sum:</strong> ${totalSum} GMT`;
+        };
+
+        const applySortAndFilter = () => {
+            const criteria = sortSelect.value;
+            const daysRaw = filterSelect.value;
+            const days = daysRaw ? parseInt(daysRaw, 10) : null;
+
+            let members = Array.isArray(clanMembers) ? [...clanMembers] : [];
+
+            switch (criteria) {
+                case 'alphabetical':
+                    members.sort((a, b) => (a.alias || '').localeCompare(b.alias || ''));
+                    break;
+                case 'joinDate':
+                    members.sort((a, b) => new Date(a.joinDate) - new Date(b.joinDate));
+                    break;
+                case 'power':
+                    members.sort((a, b) => (b.power || 0) - (a.power || 0));
+                    break;
+                case 'ability1':
+                    members.sort((a, b) => (buildAbilityCounts(b)["2ec728e7-f31f-4df3-b486-5e82a4976563"] || 0) - (buildAbilityCounts(a)["2ec728e7-f31f-4df3-b486-5e82a4976563"] || 0));
+                    break;
+                case 'ability2':
+                    members.sort((a, b) => (buildAbilityCounts(b)["44e8af7d-bcfb-4606-a111-5d6ccf1ab463"] || 0) - (buildAbilityCounts(a)["44e8af7d-bcfb-4606-a111-5d6ccf1ab463"] || 0));
+                    break;
+                case 'ability3':
+                    members.sort((a, b) => (buildAbilityCounts(b)["a1f33226-2b51-4b6e-bbfc-eb0a20f0de1c"] || 0) - (buildAbilityCounts(a)["a1f33226-2b51-4b6e-bbfc-eb0a20f0de1c"] || 0));
+                    break;
+                case 'ability4':
+                    members.sort((a, b) => (buildAbilityCounts(b)["ac859dd7-3981-4a10-886b-7c0b03b7a498"] || 0) - (buildAbilityCounts(a)["ac859dd7-3981-4a10-886b-7c0b03b7a498"] || 0));
+                    break;
+                case 'total':
+                    members.sort((a, b) => getMemberTotals(b).total - getMemberTotals(a).total);
+                    break;
+                default:
+                    break;
             }
 
-            function sortClanMembers(criteria) {
-                let sortedMembers;
-                switch (criteria) {
-                    case 'alphabetical':
-                        sortedMembers = clanMembers.sort((a, b) => a.alias.localeCompare(b.alias));
-                        break;
-                    case 'joinDate':
-                        sortedMembers = clanMembers.sort((a, b) => new Date(a.joinDate) - new Date(b.joinDate));
-                        break;
-                    case 'power':
-                        sortedMembers = clanMembers.sort((a, b) => b.power - a.power);
-                        break;
-                    case 'ability1':
-                        sortedMembers = clanMembers.sort((a, b) => b.usedNftGameAbilities?.find(a => a.nftGameAbilityId === "2ec728e7-f31f-4df3-b486-5e82a4976563")?.count - a.usedNftGameAbilities?.find(a => a.nftGameAbilityId === "2ec728e7-f31f-4df3-b486-5e82a4976563")?.count);
-                        break;
-                    case 'ability2':
-                        sortedMembers = clanMembers.sort((a, b) => b.usedNftGameAbilities?.find(a => a.nftGameAbilityId === "44e8af7d-bcfb-4606-a111-5d6ccf1ab463")?.count - a.usedNftGameAbilities?.find(a => a.nftGameAbilityId === "44e8af7d-bcfb-4606-a111-5d6ccf1ab463")?.count);
-                        break;
-                    case 'ability3':
-                        sortedMembers = clanMembers.sort((a, b) => b.usedNftGameAbilities?.find(a => a.nftGameAbilityId === "a1f33226-2b51-4b6e-bbfc-eb0a20f0de1c")?.count - a.usedNftGameAbilities?.find(a => a.nftGameAbilityId === "a1f33226-2b51-4b6e-bbfc-eb0a20f0de1c")?.count);
-                        break;
-                    case 'ability4':
-                        sortedMembers = clanMembers.sort((a, b) => b.usedNftGameAbilities?.find(a => a.nftGameAbilityId === "ac859dd7-3981-4a10-886b-7c0b03b7a498")?.count - a.usedNftGameAbilities?.find(a => a.nftGameAbilityId === "ac859dd7-3981-4a10-886b-7c0b03b7a498")?.count);
-                        break;
-                    case 'total':
-                        sortedMembers = clanMembers.sort((a, b) => {
-                            const aTotal = (a.usedNftGameAbilities?.find(a => a.nftGameAbilityId === "44e8af7d-bcfb-4606-a111-5d6ccf1ab463")?.count || 0) * 1 +
-                                           (a.usedNftGameAbilities?.find(a => a.nftGameAbilityId === "a1f33226-2b51-4b6e-bbfc-eb0a20f0de1c")?.count || 0) * 9 +
-                                           (a.usedNftGameAbilities?.find(a => a.nftGameAbilityId === "ac859dd7-3981-4a10-886b-7c0b03b7a498")?.count || 0) * 1;
-                            const bTotal = (b.usedNftGameAbilities?.find(a => a.nftGameAbilityId === "44e8af7d-bcfb-4606-a111-5d6ccf1ab463")?.count || 0) * 1 +
-                                           (b.usedNftGameAbilities?.find(a => a.nftGameAbilityId === "a1f33226-2b51-4b6e-bbfc-eb0a20f0de1c")?.count || 0) * 9 +
-                                           (b.usedNftGameAbilities?.find(a => a.nftGameAbilityId === "ac859dd7-3981-4a10-886b-7c0b03b7a498")?.count || 0) * 1;
-                            return bTotal - aTotal;
-                        });
-                        break;
-                    default:
-                        sortedMembers = clanMembers;
-                }
-                renderClanMembers(sortedMembers);
-            }
-
-            function filterClanMembers(days) {
-                if (!days) {
-                    renderClanMembers(clanMembers);
-                    return;
-                }
+            if (days) {
                 const now = new Date();
-                const filteredMembers = clanMembers.filter(member => {
+                members = members.filter((member) => {
                     const joinDate = new Date(member.joinDate);
                     const diffTime = Math.abs(now - joinDate);
                     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
                     return diffDays <= days;
                 });
-                renderClanMembers(filteredMembers);
             }
 
-            sortSelect.addEventListener('change', (event) => {
-                sortClanMembers(event.target.value);
-            });
+            renderClanMembers(members);
+        };
 
-            filterSelect.addEventListener('change', (event) => {
-                filterClanMembers(event.target.value ? parseInt(event.target.value) : null);
-            });
+        const loadClanMembers = async () => {
+            clanList.innerHTML = '<li>Loading...</li>';
+            totalSumElement.innerHTML = '';
+            clanMemberCount.textContent = '0';
 
-            sortClanMembers(sortSelect.value);
-        }
+            const bearerToken = await getBearerTokenFromCookie();
+
+            const clanData = await fetchClanMember(bearerToken);
+
+            let members =
+                clanData?.data?.usersForClient ??
+                clanData?.data?.users ??
+                clanData?.data?.array ??
+                clanData?.data?.members ??
+                [];
+
+            if (!Array.isArray(members)) {
+                console.warn('Unexpected clan member payload:', clanData);
+                members = [];
+            }
+
+            clanMembers = members;
+            clanMemberCount.textContent = String(clanMembers.length);
+            applySortAndFilter();
+        };
+
+        // Wire UI events (once).
+        sortSelect.addEventListener('change', applySortAndFilter);
+        filterSelect.addEventListener('change', applySortAndFilter);
+
+        // Initial load.
+        await loadClanMembers();
     } catch (error) {
         console.error('Error fetching clan members:', error);
-        document.getElementById('clan-list').innerHTML = '<li>Error loading clan members.</li>';
+        document.getElementById('clan-list').innerHTML = `<li>Error loading clan members.</li>`;
     }
 
-    // Event handler to clear the date picker
-    clearDateLink.addEventListener("click", (event) => {
-        event.preventDefault();
-        if (datePicker) {
-            const createdAtElement = document.getElementById("createdAt");
-            const createdAt = createdAtElement?.textContent.trim();
-            if (createdAt) {
-                const formattedDate = new Date(createdAt).toISOString().split('T')[0];
-                datePicker.value = formattedDate;
-                console.log(`Date picker reset to createdAt date: ${formattedDate}`);
-            } else {
-                console.error("CreatedAt date not found.");
-            }
-        }
-    });    
+    const marketplaceReloadBtn = document.getElementById('marketplaceReloadBtn');
+    if (marketplaceReloadBtn) {
+        marketplaceReloadBtn.addEventListener('click', () => {
+            void loadMarketplaceCheapest();
+        });
+    }
 });
 
 // Event listener for accordion headers
@@ -463,5 +600,9 @@ document.querySelectorAll('.tab').forEach(tab => {
         tab.classList.add('active');
         const target = tab.getAttribute('data-target');
         document.querySelector(`.${target}`).classList.add('active');
+
+        if (target === 'marketplace-info') {
+            void loadMarketplaceCheapest();
+        }
     });
 });

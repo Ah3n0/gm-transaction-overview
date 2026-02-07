@@ -1,38 +1,4 @@
-import { BASE_URL } from "../config.js";
-import { fetchData, fetchUpgradesNFT, pushService, fetchMaintenanceState } from './api.js';
-
-export function updateStatusLabel(statusLabel, message, isError) {
-    statusLabel.textContent = message;
-    statusLabel.className = `status-label ${isError ? 'error' : 'success'}`;
-    statusLabel.style.display = "block";
-}
-
-export async function fetchAllEntries(bearerToken, datePicker, progressLabel) {
-    const firstResponse = await fetchData(0, bearerToken, BASE_URL);
-    const totalEntries = firstResponse.data.count;
-    const pages = Math.ceil(totalEntries / 50);
-    const allEntries = [];
-
-    for (let page = 1; page <= pages; page++) {
-        const skip = (page - 1) * 50;
-        progressLabel.textContent = `Fetching page ${page} of ${pages}...`;
-        const response = await fetchData(skip, bearerToken, BASE_URL);
-
-        response.data.array.forEach((entry) => {
-            if (entry.createdAt) {
-                const entryDate = entry.createdAt.split("T")[0];
-                const startDateString = datePicker.value;
-                if (!startDateString || entryDate >= startDateString) {
-                    allEntries.push(entry);
-                }
-            } else {
-                console.warn("Entry without createdAt found:", entry);
-            }
-        });
-    }
-
-    return allEntries;
-}
+import { fetchUpgradesNFT, pushService, fetchMaintenanceState } from './api.js';
 
 export async function displayMinerEvents(minerId, bearerToken) {
     const eventList = document.getElementById('event-list');

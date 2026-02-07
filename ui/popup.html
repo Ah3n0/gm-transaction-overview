@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Transaction Download</title>
+    <title>GoMining Overview</title>
     <link rel="stylesheet" href="../styles/styles.css">
     <link rel="stylesheet" href="../styles/clan.css">
 </head>
@@ -13,41 +13,14 @@
             <div>
                 <div class="tab-container">
                     <div class="tabs">
-                        <div class="tab" data-target="container">Export</div>
-                        <div class="tab" data-target="nft-info">NFT</div>
+                        <div class="tab active" data-target="nft-info">NFT</div>
                         <div class="tab" data-target="rewards-info">Rewards</div>
                         <div class="tab" data-target="clan-info">Clan Members</div>
                         <div class="tab" data-target="discount-info">Discount</div>
+                        <div class="tab" data-target="marketplace-info">Marketplace</div>
                     </div>
                     <div class="tab-content">
-                        <div class="container tab-panel active">
-                            <h3>Transaction Download</h3>
-                            <form>
-                                <label>
-                                    <input type="checkbox" id="csv-checkbox">
-                                    Download CSV
-                                </label>
-                                <label>
-                                    <input type="checkbox" id="koinly-checkbox">
-                                    Download Koinly
-                                </label>
-                                <label>
-                                    <input type="checkbox" id="blockpit-checkbox">
-                                    Download Blockpit
-                                </label>
-                                <label>
-                                    Start At:
-                                    <input type="date" id="start-date-picker">
-                                    <a href="#" id="clear-date" style="margin-left: 10px;">Clear Date</a>
-                                </label>
-                                <button id="inspect-cookies" type="button">Generate Files</button>
-                            </form>
-                            <div id="loader" style="display: none;">
-                                <img src="../assets/spinner.gif" alt="Loading...">
-                            </div>
-                            <div id="status-label" class="status-label"></div>
-                        </div>
-                        <div class="nft-info tab-panel">
+                        <div class="nft-info tab-panel active">
                             <h3>Miner Overview</h3>
                             <div id="miner-list" class="miner-list"></div>
                             <div id="miner-events" class="miner-events">
@@ -98,7 +71,17 @@
                             <p><strong>Maintenance Without Discount:</strong> <span id="maintenance-without-discount"></span> GMT</p>
                             <p><strong>Total Maintenance:</strong> <span id="total-maintenance"></span> GMT</p>
                             <button id="update-button" disabled>Update Maintenance</button>
-                        </div>                         
+                        </div>
+
+                        <div class="marketplace-info tab-panel">
+                            <h3>Marketplace (Cheapest $/TH)</h3>
+                            <div class="toolbar">
+                                <button id="marketplaceReloadBtn" class="button">Reload</button>
+                            </div>
+                            <div id="marketplaceList">
+                                <p>Loading...</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
