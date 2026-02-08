@@ -2,7 +2,7 @@ import {
     AUTH_URL, 
 } from './config.js';
 
-import { fetchDiscount, fetchNFT, fetchMaintenanceState, fetchUserRewards, fetchNftGameIncome, mapPoolRewardIncomeEntry, fetchClanMember, fetchMarketplaceOrders, fetchCheapestMarketplaceMiners, rankMarketplaceDealsFromOrders } from './utils/api.js';
+import { fetchDiscount, fetchNFT, fetchMyNfts, fetchMaintenanceState, fetchUserRewards, fetchNftGameIncome, mapPoolRewardIncomeEntry, fetchClanMember, fetchMarketplaceOrders, fetchCheapestMarketplaceMiners, rankMarketplaceDealsFromOrders } from './utils/api.js';
 import { formatDate } from './utils/time.js';
 import { getBearerTokenFromCookie } from './utils/cookies.js';
 import { displayMinerEvents, handleButtonActivation } from './utils/ui.js';
@@ -413,8 +413,93 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Fetch all miners
     try {
         const bearerToken = await getBearerTokenFromCookie();
-        const data = await fetchNFT(0, bearerToken);
-        const miners = data.data.array;
+
+        const extractArray = (response) => {
+            const data = response?.data;
+            if (Array.isArray(data)) return data;
+            const candidates = [
+                data?.array,
+                data?.items,
+                data?.list,
+                data?.nfts,
+                data?.miners,
+            ];
+            const first = candidates.find((v) => Array.isArray(v));
+            return first ?? [];
+        };
+
+        // 1) Purchased miners (pagination). Keep it bounded to avoid heavy popup load.
+        const purchased = [];
+        const pageSize = 50;
+        const maxPages = 20;
+        for (let page = 0; page < maxPages; page++) {
+            const response = await fetchNFT(page * pageSize, bearerToken);
+            const pageItems = extractArray(response);
+            if (!Array.isArray(pageItems) || pageItems.length === 0) break;
+            purchased.push(...pageItems);
+            if (pageItems.length < pageSize) break;
+        }
+
+        // 2) All owned NFTs (includes gifted)
+        let owned = [];
+        try {
+            const ownedResponse = await fetchMyNfts(bearerToken);
+            owned = extractArray(ownedResponse);
+        } catch (ownedError) {
+            // If this endpoint breaks/changes, keep purchased list working.
+            console.warn('Failed to fetch /api/nft/get-my; continuing with purchased miners only.', ownedError);
+            owned = [];
+        }
+
+        const toFiniteNumber = (value) => {
+            if (typeof value === 'number') return Number.isFinite(value) ? value : null;
+            if (typeof value === 'string') {
+                const trimmed = value.trim();
+                if (!trimmed) return null;
+                const parsed = Number(trimmed);
+                return Number.isFinite(parsed) ? parsed : null;
+            }
+            return null;
+        };
+
+        const normalizeEntry = (item) => {
+            // Purchased shape: { value, nfts: [ { id, name, smallImageUrl, ... } ] }
+            // Owned shape (gifted included): often { id, name, smallImageUrl, ... } or { nft: {...} } or { nfts: [...] }
+            const nft = item?.nfts?.[0] ?? item?.nft ?? item;
+            const id = nft?.id ?? null;
+
+            const valueGmt =
+                toFiniteNumber(item?.value) ??
+                toFiniteNumber(item?.nftValue) ??
+                toFiniteNumber(item?.price) ??
+                toFiniteNumber(item?.nft?.value) ??
+                null;
+
+            return { id, nft, valueGmt };
+        };
+
+        // Merge & dedupe by nft id. Prefer purchased value if present.
+        const mergedById = new Map();
+
+        for (const item of purchased) {
+            const norm = normalizeEntry(item);
+            if (!norm?.id) continue;
+            mergedById.set(norm.id, norm);
+        }
+
+        for (const item of owned) {
+            const norm = normalizeEntry(item);
+            if (!norm?.id) continue;
+
+            const existing = mergedById.get(norm.id);
+            if (!existing) {
+                mergedById.set(norm.id, norm);
+            } else if ((existing.valueGmt === null || existing.valueGmt === undefined) && norm.valueGmt !== null) {
+                mergedById.set(norm.id, { ...existing, valueGmt: norm.valueGmt });
+            }
+        }
+
+        const miners = Array.from(mergedById.values());
 
         // Fetch marketplace orders
         const marketplaceOrders = await fetchMarketplaceOrders(bearerToken);
@@ -426,8 +511,8 @@ document.addEventListener("DOMContentLoaded", async () => {
             minerList.innerHTML = '';
 
             let renderedCount = 0;
-            miners.forEach(miner => {
-                const minerData = miner.nfts[0];
+            miners.forEach((miner) => {
+                const minerData = miner?.nft;
                 if (!minerData) {
                     console.warn('Miner without NFT data:', miner);
                     return;
@@ -445,7 +530,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                         ${isSold ? '<div class="sold-stamp">Sold</div>' : ''}
                     </div>
                     <h4>${minerData.name}</h4>
-                    <p>Value: ${miner.value || 0} GMT</p>
+                    <p>Value: ${miner?.valueGmt ?? 0} GMT</p>
                 `;
 
                 // Click event for miner cards

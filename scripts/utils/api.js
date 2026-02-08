@@ -1,4 +1,4 @@
-import { MINER_UPGRADE_URL, MINER_BUY_URL, DISCOUNT_URL, MAINTENANCE_STATE_URL, USER_REWARDS_URL, NFT_GAME_INCOME_URL, NFT_GAME_INCOME_APP_URL, CLAN_MEMBER_URL, CLAN_MY_URL, CLAN_BY_ID_URL, MARKETPLACE_ORDER_URL, MARKETPLACE_ORDER_INDEX_URL, MARKETPLACE_ORDER_INDEX_APP_URL, NFT_MARKETPLACE_INDEX_URL, NFT_MARKETPLACE_INDEX_APP_URL, PUSH_SERVICE_URL } from "../config.js";
+import { MINER_UPGRADE_URL, MINER_BUY_URL, MY_NFT_URL, DISCOUNT_URL, MAINTENANCE_STATE_URL, USER_REWARDS_URL, NFT_GAME_INCOME_URL, NFT_GAME_INCOME_APP_URL, CLAN_MEMBER_URL, CLAN_MY_URL, CLAN_BY_ID_URL, MARKETPLACE_ORDER_URL, MARKETPLACE_ORDER_INDEX_URL, MARKETPLACE_ORDER_INDEX_APP_URL, NFT_MARKETPLACE_INDEX_URL, NFT_MARKETPLACE_INDEX_APP_URL, PUSH_SERVICE_URL } from "../config.js";
 
 function toFiniteNumber(value) {
     if (typeof value === "number") return Number.isFinite(value) ? value : null;
@@ -215,6 +215,12 @@ export async function fetchNFT(skip, bearerToken) {
         pagination: { skip: skip, limit: 50 }
     };
     return fetchFromAPI(MINER_BUY_URL, body, bearerToken);
+}
+
+// Fetch all owned NFTs (includes gifted) from the dedicated endpoint.
+export async function fetchMyNfts(bearerToken) {
+    const body = {};
+    return fetchFromAPI(MY_NFT_URL, body, bearerToken);
 }
 
 export async function fetchUpgradesNFT(skip, bearerToken) {

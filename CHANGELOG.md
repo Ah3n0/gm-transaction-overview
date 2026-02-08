@@ -3,6 +3,7 @@
 ## Version 0.7.2
 ### Added
 - NFT: Toggle (default off) to show sold NFTs.
+- NFT: Include gifted/owned miners by merging `user-payments-history/index` with `POST /api/nft/get-my`.
 - Pool Rewards: new tab (last 12 months) with net calculation and GMT totals.
 - User: moved user info into its own tab.
 

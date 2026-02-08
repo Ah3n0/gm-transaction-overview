@@ -2,6 +2,7 @@
 export const AUTH_URL = "https://api.gomining.com/api/auth/isAuth";
 export const MINER_UPGRADE_URL = "https://api.gomining.com/api/internal-payment/get-my";
 export const MINER_BUY_URL = "https://api.gomining.com/api/user-payments-history/index";
+export const MY_NFT_URL = "https://api.gomining.com/api/nft/get-my";
 export const DISCOUNT_URL = "https://api.gomining.com/api/user/get-my-nft-discount";
 export const MAINTENANCE_STATE_URL = "https://api.gomining.com/api/action/get-maintenance-state";
 export const USER_REWARDS_URL = "https://api.gomining.com/api/nft-game/rewards-by-user";
