@@ -1,5 +1,13 @@
 # Changelog
 
+## Version 0.8.0
+### Added
+- Koinly: new tab to export the GoMining wallet history as Koinly Universal CSV (daily net reinvestment, maintenance, Simple Earn BTC rewards, GMT fund, bonuses, asset conversions, deposits/withdrawals). NFT purchases/sales/upgrades are exported as "PRÜFEN" rows for manual review.
+- API: `fetchWalletTransactionHistory` (cursor based, `/api/wallet/transaction-history`).
+
+### Fixed
+- NFT tab: marketplace orders endpoint `find-by-user` returns 404 -> switched to `find-by-user-v2` (status filter, `nft.id` instead of `nftId`). Previously the whole NFT tab failed to load.
+
 ## Version 0.7.2
 ### Added
 - NFT: Toggle (default off) to show sold NFTs.
