@@ -2,7 +2,8 @@ import {
     AUTH_URL, 
 } from './config.js';
 
-import { fetchDiscount, fetchNFT, fetchMyNfts, fetchMaintenanceState, fetchUserRewards, fetchNftGameIncome, mapPoolRewardIncomeEntry, fetchClanMember, fetchMarketplaceOrders, fetchCheapestMarketplaceMiners, rankMarketplaceDealsFromOrders } from './utils/api.js';
+import { fetchDiscount, fetchNFT, fetchMyNfts, fetchMaintenanceState, fetchUserRewards, fetchNftGameIncome, mapPoolRewardIncomeEntry, fetchClanMember, fetchMarketplaceOrders, getOrderNftId, fetchWalletTransactionHistory, fetchCheapestMarketplaceMiners, rankMarketplaceDealsFromOrders } from './utils/api.js';
+import { buildKoinlyRows, toKoinlyCsv } from './utils/koinly.js';
 import { formatDate } from './utils/time.js';
 import { getBearerTokenFromCookie } from './utils/cookies.js';
 import { displayMinerEvents, handleButtonActivation } from './utils/ui.js';
@@ -505,7 +506,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         const marketplaceOrders = await fetchMarketplaceOrders(bearerToken);
         const soldNftIds = marketplaceOrders.data.array
             .filter(order => order.status === "success")
-            .map(order => order.nftId);
+            .map(order => getOrderNftId(order));
 
         const renderMiners = ({ showSold }) => {
             minerList.innerHTML = '';
@@ -872,5 +873,58 @@ document.querySelectorAll('.tab').forEach(tab => {
         if (target === 'pool-rewards-info') {
             void loadPoolRewards();
         }
+
+        if (target === 'koinly-info') {
+            initKoinlyTab();
+        }
     });
 });
+// ---------------------------------------------------------------------------
+// Koinly export
+// ---------------------------------------------------------------------------
+let koinlyTabInitialized = false;
+
+function initKoinlyTab() {
+    if (koinlyTabInitialized) return;
+    koinlyTabInitialized = true;
+
+    const fromInput = document.getElementById('koinlyFrom');
+    const toInput = document.getElementById('koinlyTo');
+    const button = document.getElementById('koinlyExportButton');
+    const status = document.getElementById('koinlyStatus');
+
+    const today = new Date();
+    const yesterday = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate() - 1));
+    if (!toInput.value) toInput.value = yesterday.toISOString().slice(0, 10);
+
+    button.addEventListener('click', async () => {
+        const from = fromInput.value;
+        const to = toInput.value;
+        if (!from || !to || from > to) {
+            status.textContent = 'Bitte gültigen Zeitraum wählen (Von <= Bis).';
+            return;
+        }
+        button.disabled = true;
+        status.textContent = 'Lade Transaktionen...';
+        try {
+            const bearerToken = await getBearerTokenFromCookie();
+            const transactions = await fetchWalletTransactionHistory(bearerToken, { since: `${from}T00:00:00.000Z` });
+            const { rows, review, totals } = buildKoinlyRows(transactions, { from, to });
+            const csv = toKoinlyCsv(rows.concat(review));
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `GoMining_Koinly_${from}_bis_${to}.csv`;
+            link.click();
+            URL.revokeObjectURL(url);
+            const totalsText = Object.entries(totals).map(([cur, value]) => `${cur}: ${value}`).join(', ');
+            status.textContent = `${rows.length} Zeilen exportiert` + (review.length ? `, ${review.length} Zeilen mit "PRÜFEN" (NFT-Vorgänge)` : '') + `. Netto: ${totalsText}`;
+        } catch (error) {
+            console.error('Koinly export failed:', error);
+            status.textContent = `Fehler: ${error.message}`;
+        } finally {
+            button.disabled = false;
+        }
+    });
+}

@@ -1,4 +1,4 @@
-import { MINER_UPGRADE_URL, MINER_BUY_URL, MY_NFT_URL, DISCOUNT_URL, MAINTENANCE_STATE_URL, USER_REWARDS_URL, NFT_GAME_INCOME_URL, NFT_GAME_INCOME_APP_URL, CLAN_MEMBER_URL, CLAN_MY_URL, CLAN_BY_ID_URL, MARKETPLACE_ORDER_URL, MARKETPLACE_ORDER_INDEX_URL, MARKETPLACE_ORDER_INDEX_APP_URL, NFT_MARKETPLACE_INDEX_URL, NFT_MARKETPLACE_INDEX_APP_URL, PUSH_SERVICE_URL } from "../config.js";
+import { MINER_UPGRADE_URL, MINER_BUY_URL, MY_NFT_URL, DISCOUNT_URL, MAINTENANCE_STATE_URL, USER_REWARDS_URL, NFT_GAME_INCOME_URL, NFT_GAME_INCOME_APP_URL, CLAN_MEMBER_URL, CLAN_MY_URL, CLAN_BY_ID_URL, MARKETPLACE_ORDER_URL, MARKETPLACE_ORDER_INDEX_URL, MARKETPLACE_ORDER_INDEX_APP_URL, NFT_MARKETPLACE_INDEX_URL, NFT_MARKETPLACE_INDEX_APP_URL, PUSH_SERVICE_URL, WALLET_TX_HISTORY_URL } from "../config.js";
 
 function toFiniteNumber(value) {
     if (typeof value === "number") return Number.isFinite(value) ? value : null;
@@ -419,11 +419,56 @@ export async function fetchClanMember(bearerToken) {
     return { data: { usersForClient: allMembers } };
 }
 
-export async function fetchMarketplaceOrders(bearerToken) {
-    const body = {
-        pagination: { skip: 0, limit: 20 }
-    };
-    return fetchFromAPI(MARKETPLACE_ORDER_URL, body, bearerToken);
+export async function fetchMarketplaceOrders(bearerToken, options = {}) {
+    // v2 endpoint: requires status filter, returns { data: { array, count } } with `nft` objects.
+    const { statuses = ["success", "canceled", "created", "waitingForPayment", "waitingForNFtSend", "not-approved"], limit = 50 } = options;
+    let skip = 0;
+    let all = [];
+    for (let page = 0; page < 50; page++) {
+        const body = { filters: { statuses }, pagination: { skip, limit } };
+        const response = await fetchFromAPI(MARKETPLACE_ORDER_URL, body, bearerToken);
+        const array = response?.data?.array ?? [];
+        all = all.concat(array);
+        const count = response?.data?.count;
+        skip += limit;
+        if (array.length < limit || (typeof count === "number" && skip >= count)) break;
+    }
+    return { data: { array: all, count: all.length } };
+}
+
+export function getOrderNftId(order) {
+    return order?.nftId ?? order?.nft?.id ?? null;
+}
+
+export const WALLET_TYPES = ["VIRTUAL_BNB", "VIRTUAL_BTC", "VIRTUAL_ETH", "VIRTUAL_GMT", "VIRTUAL_SOL", "VIRTUAL_TON", "VIRTUAL_USDC", "VIRTUAL_USDT"];
+
+/**
+ * Fetches the complete wallet transaction history (newest first) back to `since` (ISO date, optional).
+ * Pagination is cursor based: cursor = createdAt (ms) of the last item of the previous page.
+ */
+export async function fetchWalletTransactionHistory(bearerToken, options = {}) {
+    const { since = null, limit = 100, maxPages = 500 } = options;
+    const sinceMs = since ? new Date(since).getTime() : null;
+    const seen = new Set();
+    const all = [];
+    let cursor = Date.now();
+    for (let page = 0; page < maxPages; page++) {
+        const body = { filter: { walletType: WALLET_TYPES, fromType: null, range: null }, pagination: { cursor, limit } };
+        const response = await fetchFromAPI(WALLET_TX_HISTORY_URL, body, bearerToken);
+        const array = response?.data?.array ?? [];
+        let added = 0;
+        for (const tx of array) {
+            if (seen.has(tx.id)) continue;
+            seen.add(tx.id);
+            all.push(tx);
+            added++;
+        }
+        if (array.length === 0 || added === 0 || array.length < limit) break;
+        const lastMs = new Date(array[array.length - 1].createdAt).getTime();
+        if (sinceMs !== null && lastMs < sinceMs) break;
+        cursor = lastMs >= cursor ? cursor - 1 : lastMs;
+    }
+    return sinceMs === null ? all : all.filter((tx) => new Date(tx.createdAt).getTime() >= sinceMs);
 }
 
 async function fetchMarketplaceOrderIndexPage(bearerToken, body) {

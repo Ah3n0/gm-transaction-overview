@@ -19,6 +19,7 @@
                         <div class="tab" data-target="clan-info">Clan Members</div>
                         <div class="tab" data-target="discount-info">Discount</div>
                         <div class="tab" data-target="marketplace-info">Marketplace</div>
+                        <div class="tab" data-target="koinly-info">Koinly</div>
                         <div class="tab" data-target="user-tab-info">User</div>
                     </div>
                     <div class="tab-content">
@@ -109,6 +110,17 @@
                             <div id="marketplaceList">
                                 <p>Loading...</p>
                             </div>
+                        </div>
+
+                        <div class="koinly-info tab-panel">
+                            <h3>Koinly CSV Export</h3>
+                            <p>Erzeugt eine Koinly-CSV (Universal-Format) aus der Wallet-Historie: tägliche Netto-Reinvestition (Reinvest - Maintenance), Simple-Earn-Rewards, GMT-Fund, Boni, Konvertierungen und Ein-/Auszahlungen. NFT-Käufe/-Verkäufe werden mit "PRÜFEN" markiert.</p>
+                            <div class="toolbar">
+                                <label class="toolbar-field">Von (UTC) <input type="date" id="koinlyFrom"></label>
+                                <label class="toolbar-field">Bis (UTC) <input type="date" id="koinlyTo"></label>
+                                <button id="koinlyExportButton">CSV erzeugen</button>
+                            </div>
+                            <p id="koinlyStatus"></p>
                         </div>
 
                         <div class="user-tab-info tab-panel">

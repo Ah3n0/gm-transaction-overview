@@ -38,6 +38,7 @@ Diese Chrome Extension liest automatisch das GoMining `access_token` aus Cookies
    - Clan Members: Mitglieder inkl. Sort/Filter + Totals
    - Discount: Discount + Maintenance Info
    - Marketplace: 10 günstigste Miner nach $/TH
+   - Koinly: CSV-Export der Wallet-Historie für Koinly
 5. **Enjoy the Features** offered by the extension!
 
 ---
@@ -50,6 +51,7 @@ Diese Chrome Extension liest automatisch das GoMining `access_token` aus Cookies
 4. **Clan Members**: Member list with sorting/filtering and computed totals.
 5. **Discount & Maintenance**: Current discount and maintenance information + service button.
 6. **Marketplace**: Shows the 10 currently cheapest miners by $/TH.
+7. **Koinly Export**: Exports the wallet transaction history for a date range as Koinly Universal CSV (NFT trades are marked for manual review).
 
 ---
 

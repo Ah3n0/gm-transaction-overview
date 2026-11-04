@@ -12,7 +12,8 @@ export const CLAN_MEMBER_URL = "https://api.gomining.com/api/nft-game/clan/get-m
 // Newer API variant (observed to replace get-my-with-users)
 export const CLAN_MY_URL = "https://api.gomining.com/api/nft-game/clan/get-my";
 export const CLAN_BY_ID_URL = "https://api.gomining.com/api/nft-game/clan/get-by-id";
-export const MARKETPLACE_ORDER_URL = "https://api.gomining.com/api/nft-marketplace-order/find-by-user";
+// find-by-user returns 404 since 2026; the web app now uses find-by-user-v2
+export const MARKETPLACE_ORDER_URL = "https://api.gomining.com/api/nft-marketplace-order/find-by-user-v2";
 // Marketplace listings (public marketplace index)
 export const MARKETPLACE_ORDER_INDEX_URL = "https://api.gomining.com/api/nft-marketplace-order/index";
 // Some endpoints are also reachable on app.gomining.com (fallback)
@@ -22,3 +23,6 @@ export const MARKETPLACE_ORDER_INDEX_APP_URL = "https://app.gomining.com/api/nft
 export const NFT_MARKETPLACE_INDEX_URL = "https://api.gomining.com/api/nft/marketplace-index";
 export const NFT_MARKETPLACE_INDEX_APP_URL = "https://app.gomining.com/api/nft/marketplace-index";
 export const PUSH_SERVICE_URL = "https://api.gomining.com/api/action/push";
+
+// Wallet transaction history (all virtual wallets, cursor based pagination)
+export const WALLET_TX_HISTORY_URL = "https://api.gomining.com/api/wallet/transaction-history";
